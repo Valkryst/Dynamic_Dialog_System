@@ -168,27 +168,34 @@ public class DataManager implements Serializable {
             final float luutDenominator = (set_triggeredRules.get(0).getLastUsedTime() - set_triggeredRules.get(set_triggeredRules.size() - 1).getLastUsedTime());
 
             for(final Rule rule : set_triggeredRules) {
-                float scorePercentage = (arrayList_scores.get(counter) - arrayList_scores.get(arrayList_scores.size() - 1));
-                scorePercentage /= (scoreDenominator == 0.0 ? 1f : scoreDenominator);
-                scorePercentage *= 100;
+                /*
+                 * If there are Criterion associated with the Rule and at-least one of them evaluates
+                 * to TRUE, then continue.
+                 *
+                 * If there are no Criterion associated with the Rule, then continue.
+                 */
+                if(arrayList_scores.get(counter) > 0 && getAssociatedCriterions(rule).size() == 0) {
+                    float scorePercentage = (arrayList_scores.get(counter) - arrayList_scores.get(arrayList_scores.size() - 1));
+                    scorePercentage /= (scoreDenominator == 0.0 ? 1f : scoreDenominator);
+                    scorePercentage *= 100;
 
 
-                long currLUUT = currentTime - rule.getLastUsedTime();
-                long lastLUUT = currentTime - set_triggeredRules.get(set_triggeredRules.size() - 1).getLastUsedTime();
+                    long currLUUT = currentTime - rule.getLastUsedTime();
+                    long lastLUUT = currentTime - set_triggeredRules.get(set_triggeredRules.size() - 1).getLastUsedTime();
 
 
+                    float luutPercentage = ((currLUUT - lastLUUT) < 0) ? currLUUT : (currLUUT - lastLUUT);
+                    luutPercentage = ((counter == set_triggeredRules.size() - 1) ? currLUUT : luutPercentage); // Without this, the last Rule can never be run as the luutPercentage would be 0 because currLUUT & lastLUUT are the same.
+                    luutPercentage /= (luutDenominator == 0.0 ? 1f : luutDenominator);
+                    luutPercentage *= 100;
 
-                float luutPercentage = ((currLUUT - lastLUUT) < 0) ? currLUUT : (currLUUT - lastLUUT);
-                luutPercentage = ((counter == set_triggeredRules.size() - 1) ? currLUUT : luutPercentage); // Without this, the last Rule can never be run as the luutPercentage would be 0 because currLUUT & lastLUUT are the same.
-                luutPercentage /= (luutDenominator == 0.0 ? 1f : luutDenominator);
-                luutPercentage *= 100;
 
+                    float finalScore = (scorePercentage * 0.6f) + (luutPercentage * 0.4f);
 
-                float finalScore = (scorePercentage * 0.6f) + (luutPercentage * 0.4f);
-
-                if (finalScore > highestScore) {
-                    indexOfRuleToUse = counter;
-                    highestScore = finalScore;
+                    if (finalScore > highestScore) {
+                        indexOfRuleToUse = counter;
+                        highestScore = finalScore;
+                    }
                 }
 
                 counter ++;
