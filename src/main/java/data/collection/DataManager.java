@@ -104,16 +104,28 @@ public class DataManager implements Serializable {
             // If only one Rule is found, then respond to it.
             handleResponse(arrayListMultimap_ruleResponseAssociations.get(set_triggeredRules.get(0)));
 
-        } else if(set_triggeredRules.parallelStream().anyMatch(rule -> rule.getLastUsedTime() == 0)) {
-            // If there are multiple Rules found and any of them has never been used before,
-            // then use one of the Rules which hasn't been used before.
+        } else if (set_triggeredRules.parallelStream().anyMatch(rule -> rule.getLastUsedTime() == 0)) {
+            /*
+             * If there are multiple Rules found and any of them has never been used before,
+             * then use one of the Rules which hasn't been used before.
+             */
             final Rule rule = set_triggeredRules.parallelStream().filter(r -> r.getLastUsedTime() == 0).findAny().get();
 
             rule.updateLastUsedTime();
             handleResponse(arrayListMultimap_ruleResponseAssociations.get(rule));
 
-            System.out.println(rule.toString());
+        } else if(set_triggeredRules.parallelStream().allMatch(r -> arrayListMultimap_ruleCriterionAssociations.get(r).size() == 0)) {
+            /*
+             * If none of the Rules have any Criterion, then find the Rule that was least recently
+             * used and use it.
+             */
+            final Rule rule = set_triggeredRules.parallelStream()
+                                                .sorted((ruleA, ruleB) -> Long.compare(ruleA.getLastUsedTime(), ruleB.getLastUsedTime()))
+                                                .findFirst()
+                                                .get();
 
+            rule.updateLastUsedTime();
+            handleResponse(arrayListMultimap_ruleResponseAssociations.get(rule));
         } else {
                 /*
                  * The next step is to determine which Response to use.
@@ -160,12 +172,18 @@ public class DataManager implements Serializable {
 
 
             int indexOfRuleToUse = 0;
-            float highestScore = 0;
+            double highestScore = 0;
             final long currentTime = System.currentTimeMillis();
             int counter = 0;
 
-            final float scoreDenominator = (arrayList_scores.get(0) - arrayList_scores.get(arrayList_scores.size() - 1));
-            final float luutDenominator = (set_triggeredRules.get(0).getLastUsedTime() - set_triggeredRules.get(set_triggeredRules.size() - 1).getLastUsedTime());
+            final double score_minimum = arrayList_scores.get(set_triggeredRules.size() - 1);
+            final double score_maximum = arrayList_scores.get(0);
+
+            final Rule[] array_sortedRulesByLUUT = set_triggeredRules.parallelStream()
+                                                                     .sorted((ruleA, ruleB) -> Long.compare(ruleA.getLastUsedTime(), ruleB.getLastUsedTime()))
+                                                                     .toArray(Rule[]::new);
+            final double luut_minimum = array_sortedRulesByLUUT[0].getLastUsedTime();
+            final double luut_maximum = array_sortedRulesByLUUT[array_sortedRulesByLUUT.length - 1].getLastUsedTime();
 
             for(final Rule rule : set_triggeredRules) {
                 /*
@@ -174,23 +192,11 @@ public class DataManager implements Serializable {
                  *
                  * If there are no Criterion associated with the Rule, then continue.
                  */
-                if(arrayList_scores.get(counter) > 0 && getAssociatedCriterions(rule).size() == 0) {
-                    float scorePercentage = (arrayList_scores.get(counter) - arrayList_scores.get(arrayList_scores.size() - 1));
-                    scorePercentage /= (scoreDenominator == 0.0 ? 1f : scoreDenominator);
-                    scorePercentage *= 100;
+                if(arrayList_scores.get(counter) > 0 && getAssociatedCriterions(rule).size() != 0) {
+                    final double normalizedScore = normalize(arrayList_scores.get(counter), score_minimum, score_maximum);
+                    final double normalizedLUUT = normalize(rule.getLastUsedTime(), luut_minimum, luut_maximum) * (currentTime - rule.getLastUsedTime())/1000;
 
-
-                    long currLUUT = currentTime - rule.getLastUsedTime();
-                    long lastLUUT = currentTime - set_triggeredRules.get(set_triggeredRules.size() - 1).getLastUsedTime();
-
-
-                    float luutPercentage = ((currLUUT - lastLUUT) < 0) ? currLUUT : (currLUUT - lastLUUT);
-                    luutPercentage = ((counter == set_triggeredRules.size() - 1) ? currLUUT : luutPercentage); // Without this, the last Rule can never be run as the luutPercentage would be 0 because currLUUT & lastLUUT are the same.
-                    luutPercentage /= (luutDenominator == 0.0 ? 1f : luutDenominator);
-                    luutPercentage *= 100;
-
-
-                    float finalScore = (scorePercentage * 0.6f) + (luutPercentage * 0.4f);
+                    double finalScore = (normalizedScore * 0.6f) + (normalizedLUUT * 0.4f);
 
                     if (finalScore > highestScore) {
                         indexOfRuleToUse = counter;
@@ -205,6 +211,18 @@ public class DataManager implements Serializable {
             handleResponse(arrayListMultimap_ruleResponseAssociations.get(set_triggeredRules.get(indexOfRuleToUse)));
         }
     }
+
+    private double normalize(final double current, final double minimum, final double maximum) {
+        double numerator = current - minimum;
+        double denominator = maximum - minimum;
+
+        if(denominator == 0) {
+            denominator = 1;
+        }
+
+        return numerator / denominator;
+    }
+
 
     private void handleResponse(final List<Response> responses) throws IllegalStateException {
         if(responseManager == null) {
