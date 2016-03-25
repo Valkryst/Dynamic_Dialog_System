@@ -142,8 +142,8 @@ public class DataManager implements Serializable {
                  *              ((currLUUT - lowestLUUT) / (highestLUUT - lowestLUUT)) * 100 = LUUT_Percentage
                  *
                  * Step #3:
-                 *      We must weight our two criteria from the first two steps. The score is important, but having
-                 *      a response which hasn't recently been used is more important.
+                 *      We must weight our two criteria from the first two steps. The score is important and having
+                 *      a response which hasn't recently been used is less important.
                  *
                  *      So, the weights are worth:
                  *          Score_Percentage = 60% = 0.6
