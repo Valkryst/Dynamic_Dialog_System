@@ -501,6 +501,11 @@ public class DataManager implements Serializable {
         arrayListMultimap_ruleResponseAssociations.removeAll(rule);
     }
 
+    /** @return The ResponseManager used to handle all events of the Dynamic Dialog System. */
+    public ResponseManager getResponseManager() {
+        return responseManager;
+    }
+
     /** @return The ArrayList containing all currently loaded Rules, with their IDs as Keys. */
     public List<Rule> getRules() {
         return arrayList_rules;
