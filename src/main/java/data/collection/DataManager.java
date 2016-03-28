@@ -306,6 +306,19 @@ public class DataManager implements Serializable {
 
 
     /**
+     * Adds the specified Event into the Dynamic Dialog System.
+     * If the Event already exists, then no duplicate is added.
+     *
+     * @param event
+     *         The Event to add.
+     */
+    public void addEvent(final String event) {
+        if(! arrayList_events.contains(event)) {
+            arrayList_events.add(event);
+        }
+    }
+
+    /**
      * Adds the specified Context into the Dynamic Dialog System.
      *
      * @param context
