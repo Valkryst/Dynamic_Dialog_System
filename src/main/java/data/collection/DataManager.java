@@ -4,13 +4,13 @@ import com.google.common.collect.ArrayListMultimap;
 import data.*;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class DataManager implements Serializable {
     private static final long serialVersionUID = -6339946788075815071L;
+
+    /** The Map containing User IDs and the Users that they corrospond to. */
+    private Map<Long, User> hashMap_users = Collections.synchronizedMap(new HashMap<>());
 
     /** The Events that can be used by the Dynamic Dialog System. */
     private ArrayList<String> arrayList_events;
@@ -23,16 +23,14 @@ public class DataManager implements Serializable {
 
 
 
-    /** The SplayTree containing all currently loaded Contexts, with their Names as Keys. */
-    private SplayTree<String, Context> splayTree_context = new SplayTree<>();
-    /** The ArrayList containing all currently loaded Criterion, with their IDs as Keys. */
+    /** The ArrayList containing all Criterion, with their IDs as Keys. */
     private ArrayList<Criterion> arrayList_criterion = new ArrayList<>();
-    /** The ArrayList containing all currently loaded Responses, with their IDs as Keys. */
+    /** The ArrayList containing all Responses, with their IDs as Keys. */
     private ArrayList<Response> arrayList_response = new ArrayList<>();
-    /** The ArrayList containing all currently loaded Rules, with their IDs as Keys. */
+    /** The ArrayList containing all Rules, with their IDs as Keys. */
     private ArrayList<Rule> arrayList_rules = new ArrayList<>();
 
-    /** The ArrayList containing all currently loaded Context names. */
+    /** The ArrayList containing all possible Context names. */
     private ArrayList<String> arrayList_contextNames = new ArrayList<>();
 
     /** The ArrayListMultimap containing all associations between each Event and the Rules that it triggers. */
@@ -42,14 +40,14 @@ public class DataManager implements Serializable {
     /** The ArrayListMultimap containing all associations between each Rule and it's Criterion. */
     private ArrayListMultimap<Rule, Criterion> arrayListMultimap_ruleCriterionAssociations = ArrayListMultimap.create();
 
-    /** The HashMap containing Context Namess and the time at which they were last used. */
-    private HashMap<Context, Long> hashMap_context_lastUsedTime = new HashMap<>();
-    /** The HashMap containing Criterion IDs and the time at which they were last used. */
-    private HashMap<Criterion, Long> hashMap_criterion_lastUsedTime = new HashMap<>();
-    /** The HashMap containing Response IDs and the time at which they were last used. */
-    private HashMap<Response, Long> hashMap_response_lastUsedTime = new HashMap<>();
-    /** The HashMap containing Rule IDs and the time at which they were last used. */
-    private HashMap<Rule, Long> hashMap_rules_lastUsedTime = new HashMap<>();
+    /** The Map containing Context Namess and the time at which they were last used. */
+    private Map<Context, Long> hashMap_context_lastUsedTime = Collections.synchronizedMap(new HashMap<>());
+    /** The Map containing Criterion IDs and the time at which they were last used. */
+    private Map<Criterion, Long> hashMap_criterion_lastUsedTime = Collections.synchronizedMap(new HashMap<>());
+    /** The Map containing Response IDs and the time at which they were last used. */
+    private Map<Response, Long> hashMap_response_lastUsedTime = Collections.synchronizedMap(new HashMap<>());
+    /** The Map containing Rule IDs and the time at which they were last used. */
+    private Map<Rule, Long> hashMap_rules_lastUsedTime = Collections.synchronizedMap(new HashMap<>());
 
     /**
      * Construct a new DataManager.
@@ -270,7 +268,10 @@ public class DataManager implements Serializable {
 
     /**
      * Attempts to retrieve the Value associated with the specified Key
-     * from the splayTree_context.
+     * from the splayTree_context of the specified user.
+     *
+     * @param userId
+     *         The ID of the user to retrieve the value from.
      *
      * @param key
      *        The Key associated with the Value to retrieve.
@@ -286,41 +287,16 @@ public class DataManager implements Serializable {
      *
      *        If anything goes wrong, String of data itself is returned.
      */
-    public Object getValue(final String key) {
-        final ValueType valueType = splayTree_context.get(key).getValueType();
-        final String value = splayTree_context.get(key).getValue();
-
-        switch(valueType) {
-            case BYTE: {
-                return Byte.valueOf(value);
-            }
-            case SHORT: {
-                return Short.valueOf(value);
-            }
-            case INTEGER: {
-                return Integer.valueOf(value);
-            }
-            case LONG: {
-                return Long.valueOf(value);
-            }
-            case FLOAT: {
-                return Float.valueOf(value);
-            }
-            case DOUBLE: {
-                return Double.valueOf(value);
-            }
-            case BOOLEAN: {
-                return Boolean.valueOf(value);
-            }
-            default: {
-                return value;
-            }
-        }
+    public Object getContextValue(final long userId, final String key) {
+        return hashMap_users.get(userId).getValue(key);
     }
 
     /**
      * Attempts to set the Value associated with the specified Key to
      * the specified Value within the splayTree_context.
+     *
+     * @param userId
+     *         The ID of the user whose value is to be set.
      *
      * @param key
      *        The Key associated with the Value to retrieve.
@@ -328,8 +304,11 @@ public class DataManager implements Serializable {
      * @param newValue
      *        The new Value to place into the Context.
      */
-    public void setValue(final String key, final String newValue) {
-        splayTree_context.get(key).setValue(newValue);
+    public void setValue(final long userId, final String key, final String newValue) {
+        hashMap_users.get(userId)
+                     .getSplayTree_context()
+                     .get(key)
+                     .setValue(newValue);
     }
 
 
@@ -355,8 +334,15 @@ public class DataManager implements Serializable {
      * @param context
      *         The Context to add into the Dynamic Dialog System.
      */
-    public void addContext(final Context context) {
-        splayTree_context.put(context.getName(), context);
+    public void addContext(final long userId, final Context context) {
+        for (Map.Entry<Long, User> longUserEntry : hashMap_users.entrySet()) {
+            longUserEntry
+                    .getValue()
+                    .getSplayTree_context()
+                    .put(context.getName(), context);
+
+        }
+
         arrayList_contextNames.add(context.getName());
     }
 
@@ -378,8 +364,16 @@ public class DataManager implements Serializable {
                                                                        context.toString() + "\n\n" + criterion.toString());
                            });
 
+        // Remove the context from all users:
+        for (Map.Entry<Long, User> longUserEntry : hashMap_users.entrySet()) {
+            longUserEntry
+                    .getValue()
+                    .getSplayTree_context()
+                    .remove(context.getName());
+
+        }
+
         hashMap_context_lastUsedTime.remove(context);
-        splayTree_context.remove(context.getName());
         arrayList_contextNames.remove(context.getName());
     }
 
@@ -570,20 +564,6 @@ public class DataManager implements Serializable {
         return arrayList_contextNames;
     }
 
-
-    /**
-     * Attempts to locate, and return, a Context by it's name.
-     *
-     * @param contextName
-     *         The Context name to search for.
-     *
-     * @return
-     *         If a context using the specified name exists, then it is returned.
-     *         Else NULL is returned.
-     */
-    public Context getContextByName(final String contextName) {
-        return splayTree_context.get(contextName);
-    }
 
     /**
      * Locates all Criterions associated with the specified Rule.
