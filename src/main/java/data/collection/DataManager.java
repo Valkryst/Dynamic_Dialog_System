@@ -40,14 +40,14 @@ public class DataManager implements Serializable {
     /** The ArrayListMultimap containing all associations between each Rule and it's Criterion. */
     private ArrayListMultimap<Rule, Criterion> arrayListMultimap_ruleCriterionAssociations = ArrayListMultimap.create();
 
-    /** The Map containing Context Namess and the time at which they were last used. */
-    private Map<Context, Long> hashMap_context_lastUsedTime = Collections.synchronizedMap(new HashMap<>());
-    /** The Map containing Criterion IDs and the time at which they were last used. */
-    private Map<Criterion, Long> hashMap_criterion_lastUsedTime = Collections.synchronizedMap(new HashMap<>());
-    /** The Map containing Response IDs and the time at which they were last used. */
-    private Map<Response, Long> hashMap_response_lastUsedTime = Collections.synchronizedMap(new HashMap<>());
-    /** The Map containing Rule IDs and the time at which they were last used. */
-    private Map<Rule, Long> hashMap_rules_lastUsedTime = Collections.synchronizedMap(new HashMap<>());
+    /** The HashMap containing Context Namess and the time at which they were last used. */
+    private HashMap<Context, Long> hashMap_context_lastUsedTime =  new HashMap<>();
+    /** The HashMap containing Criterion IDs and the time at which they were last used. */
+    private HashMap<Criterion, Long> hashMap_criterion_lastUsedTime =  new HashMap<>();
+    /** The HashMap containing Response IDs and the time at which they were last used. */
+    private HashMap<Response, Long> hashMap_response_lastUsedTime =  new HashMap<>();
+    /** The HashMap containing Rule IDs and the time at which they were last used. */
+    private HashMap<Rule, Long> hashMap_rules_lastUsedTime = new HashMap<>();
 
     /**
      * Construct a new DataManager.
