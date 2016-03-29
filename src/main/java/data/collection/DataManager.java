@@ -287,8 +287,38 @@ public class DataManager implements Serializable {
      *
      *        If anything goes wrong, String of data itself is returned.
      */
-    public Object getContextValue(final long userId, final String key) {
-        return hashMap_users.get(userId).getValue(key);
+    public Object getValue(final long userId, final String key) {
+        final SplayTree<String, Context> splayTree_context = hashMap_users.get(userId).getSplayTree_context();
+
+        final ValueType valueType = splayTree_context.get(key).getValueType();
+        final String value = splayTree_context.get(key).getValue();
+
+        switch(valueType) {
+            case BYTE: {
+                return Byte.valueOf(value);
+            }
+            case SHORT: {
+                return Short.valueOf(value);
+            }
+            case INTEGER: {
+                return Integer.valueOf(value);
+            }
+            case LONG: {
+                return Long.valueOf(value);
+            }
+            case FLOAT: {
+                return Float.valueOf(value);
+            }
+            case DOUBLE: {
+                return Double.valueOf(value);
+            }
+            case BOOLEAN: {
+                return Boolean.valueOf(value);
+            }
+            default: {
+                return value;
+            }
+        }
     }
 
     /**
@@ -334,7 +364,7 @@ public class DataManager implements Serializable {
      * @param context
      *         The Context to add into the Dynamic Dialog System.
      */
-    public void addContext(final long userId, final Context context) {
+    public void addContext(final Context context) {
         for (Map.Entry<Long, User> longUserEntry : hashMap_users.entrySet()) {
             longUserEntry
                     .getValue()
