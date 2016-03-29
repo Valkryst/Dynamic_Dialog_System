@@ -7,7 +7,7 @@ import java.io.Serializable;
 import java.util.*;
 
 public class DataManager implements Serializable {
-    private static final long serialVersionUID = -6339946788075815071L;
+    private static final long serialVersionUID = -8315058849729574995L;
 
     /** The Map containing User IDs and the Users that they corrospond to. */
     private Map<Long, User> hashMap_users = Collections.synchronizedMap(new HashMap<>());
