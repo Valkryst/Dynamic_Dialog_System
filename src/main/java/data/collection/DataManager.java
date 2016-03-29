@@ -378,7 +378,7 @@ public class DataManager implements Serializable {
                                                                        context.toString() + "\n\n" + criterion.toString());
                            });
 
-        hashMap_context_lastUsedTime.remove(context.getName());
+        hashMap_context_lastUsedTime.remove(context);
         splayTree_context.remove(context.getName());
         arrayList_contextNames.remove(context.getName());
     }
