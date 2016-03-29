@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 public class DataManager implements Serializable {
     private static final long serialVersionUID = -6339946788075815071L;
@@ -170,8 +171,9 @@ public class DataManager implements Serializable {
                  *      Use whichever Response has the highest final score.
                  */
 
+            final ArrayList<Integer> arrayList_incidesToUse = new ArrayList<>();
 
-            int indexOfRuleToUse = 0;
+
             double highestScore = 0;
             final long currentTime = System.currentTimeMillis();
             int counter = 0;
@@ -199,21 +201,50 @@ public class DataManager implements Serializable {
                     double finalScore = (normalizedScore * 0.6f) + (normalizedLUUT * 0.4f);
 
                     if (finalScore > highestScore) {
-                        indexOfRuleToUse = counter;
+                        arrayList_incidesToUse.clear();
                         highestScore = finalScore;
                     }
+
+                    arrayList_incidesToUse.add(counter);
                 }
 
                 counter ++;
             }
 
-            set_triggeredRules.get(indexOfRuleToUse).updateLastUsedTime();
-            handleResponse(arrayListMultimap_ruleResponseAssociations.get(set_triggeredRules.get(indexOfRuleToUse)));
+
+            /*
+             * If there is only one Rule with the highest score, then use
+             * it.
+             *
+             * If there are multiple Rules that share the highest score,
+             * then randomly pick one to use.
+             */
+            final Random random = new Random(System.nanoTime());
+            final int indexToUse = random.nextInt(arrayList_incidesToUse.size());
+
+            set_triggeredRules.get(indexToUse).updateLastUsedTime();
+            handleResponse(arrayListMultimap_ruleResponseAssociations.get(set_triggeredRules.get(indexToUse)));
         }
     }
 
-    private double normalize(final double current, final double minimum, final double maximum) {
-        double numerator = current - minimum;
+    /**
+     * Normalizes the specified value to a percentage between the specified
+     * minimum and maximum values.
+     *
+     * @param value
+     *         The value to normalize.
+     *
+     * @param minimum
+     *         The minimum value.
+     *
+     * @param maximum
+     *         The maximum value.
+     *
+     * @return
+     *         The normalized value.
+     */
+    private double normalize(final double value, final double minimum, final double maximum) {
+        double numerator = value - minimum;
         double denominator = maximum - minimum;
 
         if(denominator == 0) {
