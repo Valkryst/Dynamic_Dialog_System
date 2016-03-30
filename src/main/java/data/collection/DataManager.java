@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class DataManager implements Serializable {
-    private static final long serialVersionUID = -8315058849729574995L;
+    private static final long serialVersionUID = 6158503022877874004L;
 
     /** The ConcurrentHashMap containing User IDs and the Users that they corrospond to. */
     private ConcurrentHashMap<Long, User> hashMap_users = new ConcurrentHashMap<>();
