@@ -5,12 +5,13 @@ import data.*;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DataManager implements Serializable {
     private static final long serialVersionUID = -8315058849729574995L;
 
-    /** The Map containing User IDs and the Users that they corrospond to. */
-    private Map<Long, User> hashMap_users = Collections.synchronizedMap(new HashMap<>());
+    /** The ConcurrentHashMap containing User IDs and the Users that they corrospond to. */
+    private ConcurrentHashMap<Long, User> hashMap_users = new ConcurrentHashMap<>();
 
     /** The Events that can be used by the Dynamic Dialog System. */
     private ArrayList<String> arrayList_events;
@@ -40,14 +41,14 @@ public class DataManager implements Serializable {
     /** The ArrayListMultimap containing all associations between each Rule and it's Criterion. */
     private ArrayListMultimap<Rule, Criterion> arrayListMultimap_ruleCriterionAssociations = ArrayListMultimap.create();
 
-    /** The HashMap containing Context Namess and the time at which they were last used. */
-    private HashMap<Context, Long> hashMap_context_lastUsedTime =  new HashMap<>();
-    /** The HashMap containing Criterion IDs and the time at which they were last used. */
-    private HashMap<Criterion, Long> hashMap_criterion_lastUsedTime =  new HashMap<>();
-    /** The HashMap containing Response IDs and the time at which they were last used. */
-    private HashMap<Response, Long> hashMap_response_lastUsedTime =  new HashMap<>();
-    /** The HashMap containing Rule IDs and the time at which they were last used. */
-    private HashMap<Rule, Long> hashMap_rules_lastUsedTime = new HashMap<>();
+    /** The ConcurrentHashMap containing Context Namess and the time at which they were last used. */
+    private ConcurrentHashMap<Context, Long> hashMap_context_lastUsedTime =  new ConcurrentHashMap<>();
+    /** The ConcurrentHashMap containing Criterion IDs and the time at which they were last used. */
+    private ConcurrentHashMap<Criterion, Long> hashMap_criterion_lastUsedTime =  new ConcurrentHashMap<>();
+    /** The ConcurrentHashMap containing Response IDs and the time at which they were last used. */
+    private ConcurrentHashMap<Response, Long> hashMap_response_lastUsedTime =  new ConcurrentHashMap<>();
+    /** The ConcurrentHashMap containing Rule IDs and the time at which they were last used. */
+    private ConcurrentHashMap<Rule, Long> hashMap_rules_lastUsedTime = new ConcurrentHashMap<>();
 
     /**
      * Construct a new DataManager.
