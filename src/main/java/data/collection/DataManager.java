@@ -710,10 +710,61 @@ public class DataManager implements Serializable {
         lock_arrayListMultimap_ruleResponseAssociations.writeLock().unlock();
     }
 
+
+
+
+
     /** @return The ResponseManager used to handle all events of the Dynamic Dialog System. */
     public ResponseManager getResponseManager() {
         return responseManager;
     }
+
+    /** @return A copy of the ArrayList containing all Rules, with their IDs as Keys. */
+    public List<Rule> getRules() {
+        lock_arrayList_rules.readLock().lock();
+
+        final List<Rule> list = new ArrayList<>(arrayList_rules);
+
+        lock_arrayList_rules.readLock().unlock();
+
+        return list;
+    }
+
+    /** @return A copy of the ArrayList containing all Events that are used by the Dynamic Dialog System. */
+    public List<String> getEvents() {
+        lock_arrayList_events.readLock().lock();
+
+        final List<String> list = new ArrayList<>(arrayList_events);
+
+        lock_arrayList_events.readLock().unlock();
+
+        return list;
+    }
+
+    /** @return A copy of the ArrayList containing all ResponseTypes that are used by the Dynamic Dialog System. */
+    public List<String> getResponseTypes() {
+        lock_arrayList_responseTypes.readLock().lock();
+
+        final List<String> list = new ArrayList<>(arrayList_responseTypes);
+
+        lock_arrayList_responseTypes.readLock().unlock();
+
+        return list;
+    }
+
+    /** @return A copy of the ArrayList containing all Context names that are used by the Dynamic Dialog System.. */
+    public List<String> getContextNames() {
+        lock_arrayList_contextNames.readLock().lock();
+
+        final List<String> list = new ArrayList<>(arrayList_contextNames);
+
+        lock_arrayList_contextNames.readLock().unlock();
+
+        return list;
+    }
+
+
+
 
 
     /**
