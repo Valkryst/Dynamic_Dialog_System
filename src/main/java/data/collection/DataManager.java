@@ -4,8 +4,12 @@ import com.google.common.collect.ArrayListMultimap;
 import data.*;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class DataManager implements Serializable {
     private static final long serialVersionUID = -8315058849729574995L;
@@ -50,6 +54,26 @@ public class DataManager implements Serializable {
     /** The ConcurrentHashMap containing Rule IDs and the time at which they were last used. */
     private ConcurrentHashMap<Rule, Long> hashMap_rules_lastUsedTime = new ConcurrentHashMap<>();
 
+
+    /** The Lock of the arrayList_events data structure. */
+    private final ReentrantReadWriteLock lock_arrayList_events = new ReentrantReadWriteLock();
+    /** The Lock of the arrayList_responseTypes data structure. */
+    private final ReentrantReadWriteLock lock_arrayList_responseTypes = new ReentrantReadWriteLock();
+    /** The Lock of the arrayList_criterion data structure. */
+    private final ReentrantReadWriteLock lock_arrayList_criterion = new ReentrantReadWriteLock();
+    /** The Lock of the arrayList_response data structure. */
+    private final ReentrantReadWriteLock lock_arrayList_responses = new ReentrantReadWriteLock();
+    /** The Lock of the arrayList_rules data structure. */
+    private final ReentrantReadWriteLock lock_arrayList_rules = new ReentrantReadWriteLock();
+    /** The Lock of the arrayList_contextNames data structure. */
+    private final ReentrantReadWriteLock lock_arrayList_contextNames = new ReentrantReadWriteLock();
+    /** The Lock of the arrayListMultimap_ruleEventAssociations data structure. */
+    private final ReentrantReadWriteLock lock_arrayListMultimap_ruleEventAssociations = new ReentrantReadWriteLock();
+    /** The Lock of the arrayListMultimap_ruleResponseAssociations data structure. */
+    private final ReentrantReadWriteLock lock_arrayListMultimap_ruleResponseAssociations = new ReentrantReadWriteLock();
+    /** The Lock of the arrayListMultimap_ruleCriterionAssociations data structure. */
+    private final ReentrantReadWriteLock lock_arrayListMultimap_ruleCriterionAssociations = new ReentrantReadWriteLock();
+
     /**
      * Construct a new DataManager.
      *
@@ -78,11 +102,18 @@ public class DataManager implements Serializable {
     private int updateRuleCriterion(final Rule rule) {
         int isTrueCounter = 0;
 
+        // Write Lock the Data:
+        lock_arrayListMultimap_ruleCriterionAssociations.writeLock().lock();
+
+        // Update the Data:
         for(final Criterion criterion : arrayListMultimap_ruleCriterionAssociations.get(rule)) {
             criterion.update();
 
             isTrueCounter += (criterion.getIsTrue() ? 1 : 0);
         }
+
+        // Unlock the Lock.
+        lock_arrayListMultimap_ruleCriterionAssociations.writeLock().unlock();
 
         return isTrueCounter;
     }
@@ -289,10 +320,20 @@ public class DataManager implements Serializable {
      *        If anything goes wrong, String of data itself is returned.
      */
     public Object getValue(final long userId, final String key) {
-        final SplayTree<String, Context> splayTree_context = hashMap_users.get(userId).getSplayTree_context();
+        final User user = hashMap_users.get(userId);
+
+        // Write Lock User's SplayTree:
+        user.getLock_splayTree_context().readLock().lock();
+
+        // Get Data:
+        final SplayTree<String, Context> splayTree_context = user.getSplayTree_context();
 
         final ValueType valueType = splayTree_context.get(key).getValueType();
         final String value = splayTree_context.get(key).getValue();
+
+        // Unlock the Lock:
+        user.getLock_splayTree_context().readLock().unlock();
+
 
         switch(valueType) {
             case BYTE: {
@@ -354,9 +395,13 @@ public class DataManager implements Serializable {
      *         The Event to add.
      */
     public void addEvent(final String event) {
+        lock_arrayList_events.writeLock();
+
         if(! arrayList_events.contains(event)) {
             arrayList_events.add(event);
         }
+
+        lock_arrayList_events.writeLock().unlock();
     }
 
     /**
@@ -366,15 +411,22 @@ public class DataManager implements Serializable {
      *         The Context to add into the Dynamic Dialog System.
      */
     public void addContext(final Context context) {
-        for (Map.Entry<Long, User> longUserEntry : hashMap_users.entrySet()) {
-            longUserEntry
-                    .getValue()
-                    .getSplayTree_context()
-                    .put(context.getName(), context);
+        for (Map.Entry<Long, User> user : hashMap_users.entrySet()) {
+            user.getValue().getLock_splayTree_context().writeLock().lock();
 
+            user.getValue()
+                .getSplayTree_context()
+                .put(context.getName(), context);
+
+            user.getValue().getLock_splayTree_context().writeLock().unlock();
         }
 
+
+        lock_arrayList_contextNames.writeLock().lock();
+
         arrayList_contextNames.add(context.getName());
+
+        lock_arrayList_contextNames.writeLock().unlock();
     }
 
     /**
@@ -386,6 +438,8 @@ public class DataManager implements Serializable {
     public void removeContext(final Context context) throws UnsupportedOperationException {
         // If the Context to be removed is still in-use by some Criterion in the System,
         // then throw an exception to prevent it from being removed.
+        lock_arrayList_criterion.readLock().lock();
+
         arrayList_criterion.parallelStream()
                            .filter(criterion -> criterion != null)
                            .filter(criterion -> criterion.getContext().equals(context))
@@ -395,17 +449,32 @@ public class DataManager implements Serializable {
                                                                        context.toString() + "\n\n" + criterion.toString());
                            });
 
-        // Remove the context from all users:
-        for (Map.Entry<Long, User> longUserEntry : hashMap_users.entrySet()) {
-            longUserEntry
-                    .getValue()
+        lock_arrayList_criterion.readLock().unlock();
+
+
+        // Remove the Context from all users:
+        for (Map.Entry<Long, User> user : hashMap_users.entrySet()) {
+            user.getValue().getLock_splayTree_context().writeLock().lock();
+
+            user.getValue()
                     .getSplayTree_context()
                     .remove(context.getName());
 
+            user.getValue().getLock_splayTree_context().writeLock().unlock();
+
         }
 
+
+        // Remove the Context's last used time from the DDS:
         hashMap_context_lastUsedTime.remove(context);
+
+
+        // Remove the Context's name from the DDS:
+        lock_arrayList_contextNames.writeLock().lock();
+
         arrayList_contextNames.remove(context.getName());
+
+        lock_arrayList_contextNames.writeLock().unlock();
     }
 
     /**
@@ -415,7 +484,11 @@ public class DataManager implements Serializable {
      *         The Criterion to add into the Dynamic Dialog System.
      */
     public void addCriterion(final Criterion criterion) {
+        lock_arrayList_criterion.writeLock().lock();
+
         arrayList_criterion.add(criterion);
+
+        lock_arrayList_criterion.writeLock().unlock();
     }
 
     /**
@@ -427,6 +500,8 @@ public class DataManager implements Serializable {
     public void removeCriterion(final Criterion criterion) throws UnsupportedOperationException {
         // If the Criterion to be removed is still in-use by some Rule in the System,
         // then throw an exception to prevent it from being removed.
+        lock_arrayList_rules.readLock().lock();
+
         arrayList_rules.parallelStream()
                        .filter(rule -> rule != null)
                        .filter(rule -> arrayListMultimap_ruleCriterionAssociations.get(rule).contains(criterion))
@@ -436,8 +511,19 @@ public class DataManager implements Serializable {
                                                                    criterion.toString() + "\n\n" + rule.toString());
                        });
 
+        lock_arrayList_rules.readLock().unlock();
+
+
+        // Remove the Rule's last used time from the DDS:
         hashMap_criterion_lastUsedTime.remove(criterion);
+
+
+        // Remove the Rule's name from the DDS:
+        lock_arrayList_criterion.writeLock().lock();
+
         arrayList_criterion.remove(criterion);
+
+        lock_arrayList_criterion.writeLock().unlock();
     }
 
     /**
@@ -447,7 +533,11 @@ public class DataManager implements Serializable {
      *         The Response to add into the Dynamic Dialog System.
      */
     public void addResponse(final Response response) {
+        lock_arrayList_responses.writeLock().lock();
+
         arrayList_response.add(response);
+
+        lock_arrayList_responses.writeLock().unlock();
     }
 
     /**
@@ -459,6 +549,8 @@ public class DataManager implements Serializable {
     public void removeResponse(final Response response) throws UnsupportedOperationException {
         // If the Response to be removed is still in-use by some Rule in the System,
         // then throw an exception to prevent it from being removed.
+        lock_arrayList_rules.readLock().lock();
+
         arrayList_rules.parallelStream()
                        .filter(rule -> rule != null)
                        .filter(rule -> arrayListMultimap_ruleResponseAssociations.get(rule).contains(response))
@@ -468,8 +560,19 @@ public class DataManager implements Serializable {
                                                                    response.toString() + "\n\n" + rule.toString());
                        });
 
+        lock_arrayList_rules.readLock().unlock();
+
+
+        // Remove the Response's last used time from the DDS:
         hashMap_response_lastUsedTime.remove(response);
+
+
+        // Remove the Response's name from the DDS:
+        lock_arrayList_responses.writeLock().lock();
+
         arrayList_response.remove(response);
+
+        lock_arrayList_responses.writeLock().unlock();
     }
 
     /**
@@ -479,7 +582,11 @@ public class DataManager implements Serializable {
      *         The Rule to add into the Dynamic Dialog System.
      */
     public void addRule(final Rule rule) {
+        lock_arrayList_rules.readLock().lock();
+
         arrayList_rules.add(rule);
+
+        lock_arrayList_rules.readLock().unlock();
     }
 
     /**
@@ -493,8 +600,17 @@ public class DataManager implements Serializable {
         removeRuleEventAssociations(rule);
         removeRuleResponseAssociations(rule);
 
+
+        // Remove the Rule's last used time from the DDS:
         hashMap_rules_lastUsedTime.remove(rule);
+
+
+        // Remove the Rule from the DDS:
+        lock_arrayList_rules.writeLock().lock();
+
         arrayList_rules.remove(rule);
+
+        lock_arrayList_rules.writeLock().unlock();
     }
 
     /**
@@ -507,7 +623,11 @@ public class DataManager implements Serializable {
      *         The criterion to use in the association.
      */
     public void addRuleCriterionAssociation(final Rule rule, final Criterion criterion) {
+        lock_arrayListMultimap_ruleCriterionAssociations.writeLock().lock();
+
         arrayListMultimap_ruleCriterionAssociations.put(rule, criterion);
+
+        lock_arrayListMultimap_ruleCriterionAssociations.writeLock().unlock();
     }
 
     /**
@@ -518,7 +638,11 @@ public class DataManager implements Serializable {
      *         The Rule whose associations are to be removed.
      */
     public void removeRuleCriterionAssociations(final Rule rule) {
+        lock_arrayListMultimap_ruleCriterionAssociations.writeLock().lock();
+
         arrayListMultimap_ruleCriterionAssociations.removeAll(rule);
+
+        lock_arrayListMultimap_ruleCriterionAssociations.writeLock().unlock();
     }
 
     /**
@@ -531,7 +655,11 @@ public class DataManager implements Serializable {
      *         The rule to use in the association.
      */
     public void addRuleEventAssociation(final String event, final Rule rule) {
+        lock_arrayListMultimap_ruleEventAssociations.writeLock().lock();
+
         arrayListMultimap_ruleEventAssociations.put(event, rule);
+
+        lock_arrayListMultimap_ruleEventAssociations.writeLock().unlock();
     }
 
     /**
@@ -542,8 +670,12 @@ public class DataManager implements Serializable {
      *         The Rule whose associations are to be removed.
      */
     public void removeRuleEventAssociations(final Rule rule) {
+        lock_arrayListMultimap_ruleEventAssociations.writeLock().lock();
+
         arrayListMultimap_ruleEventAssociations.entries()
                                                .removeIf(entry -> entry.getValue().equals(rule));
+
+        lock_arrayListMultimap_ruleEventAssociations.writeLock().unlock();
     }
 
     /**
@@ -556,7 +688,11 @@ public class DataManager implements Serializable {
      *         The response to use in the association.
      */
     public void addRuleResponseAssociation(final Rule rule, final Response response) {
+        lock_arrayListMultimap_ruleResponseAssociations.writeLock().lock();
+
         arrayListMultimap_ruleResponseAssociations.put(rule, response);
+
+        lock_arrayListMultimap_ruleResponseAssociations.writeLock().unlock();
     }
 
     /**
@@ -567,32 +703,16 @@ public class DataManager implements Serializable {
      *         The Rule whose associations are to be removed.
      */
     public void removeRuleResponseAssociations(final Rule rule) {
+        lock_arrayListMultimap_ruleResponseAssociations.writeLock().lock();
+
         arrayListMultimap_ruleResponseAssociations.removeAll(rule);
+
+        lock_arrayListMultimap_ruleResponseAssociations.writeLock().unlock();
     }
 
     /** @return The ResponseManager used to handle all events of the Dynamic Dialog System. */
     public ResponseManager getResponseManager() {
         return responseManager;
-    }
-
-    /** @return The ArrayList containing all currently loaded Rules, with their IDs as Keys. */
-    public List<Rule> getRules() {
-        return arrayList_rules;
-    }
-
-    /** @return The ResponseTypes that can be used by the Dynamic Dialog System. */
-    public List<String> getEvents() {
-        return arrayList_events;
-    }
-
-    /** @return The ResponseManager used to handle all events of the Dynamic Dialog System. */
-    public List<String> getResponseTypes() {
-        return arrayList_responseTypes;
-    }
-
-    /** @return The ArrayList containing all currently loaded Context names. */
-    public List<String> getContextNames() {
-        return arrayList_contextNames;
     }
 
 
@@ -606,7 +726,13 @@ public class DataManager implements Serializable {
      *         A list containing all Criterions associated with the specified Rule.
      */
     public List<Criterion> getAssociatedCriterions(final Rule rule) {
-        return arrayListMultimap_ruleCriterionAssociations.get(rule);
+        lock_arrayListMultimap_ruleCriterionAssociations.readLock().lock();
+
+        final List<Criterion> list = arrayListMultimap_ruleCriterionAssociations.get(rule);
+
+        lock_arrayListMultimap_ruleCriterionAssociations.readLock().unlock();
+
+        return list;
     }
 
     /**
@@ -621,10 +747,14 @@ public class DataManager implements Serializable {
     public List<String> getAssociatedEvents(final Rule rule) {
         final List<String> list_associatedEvents = new ArrayList<>();
 
+        lock_arrayListMultimap_ruleEventAssociations.readLock().lock();
+
         arrayListMultimap_ruleEventAssociations.entries()
                                                       .parallelStream()
                                                       .filter(entry -> entry.getValue().equals(rule))
                                                       .forEach(entry -> list_associatedEvents.add(entry.getKey()));
+
+        lock_arrayListMultimap_ruleEventAssociations.readLock().unlock();
 
         return list_associatedEvents;
 }
@@ -639,7 +769,13 @@ public class DataManager implements Serializable {
      *         A list containing all Responses associated with the specified Rule.
      */
     public List<Response> getAssociatedResponses(final Rule rule) {
-        return arrayListMultimap_ruleResponseAssociations.get(rule);
+        lock_arrayListMultimap_ruleResponseAssociations.readLock().lock();
+
+        final List<Response> list = arrayListMultimap_ruleResponseAssociations.get(rule);
+
+        lock_arrayListMultimap_ruleResponseAssociations.readLock().unlock();
+
+        return list;
     }
 
     /**
@@ -652,7 +788,13 @@ public class DataManager implements Serializable {
      *         A list containing all Rules associated with the specified Event.
      */
     public List<Rule> getAssociatedRules(final String event) {
-        return arrayListMultimap_ruleEventAssociations.get(event);
+        lock_arrayListMultimap_ruleEventAssociations.readLock().lock();
+
+        final List<Rule> list = arrayListMultimap_ruleEventAssociations.get(event);
+
+        lock_arrayListMultimap_ruleEventAssociations.readLock().unlock();
+
+        return list;
     }
 
 
@@ -666,17 +808,25 @@ public class DataManager implements Serializable {
      *         The Events that can be used by the Dynamic Dialog system.
      */
     public void setEvents(final ArrayList<String> arrayList_events) {
+        lock_arrayList_events.writeLock().lock();
+
         this.arrayList_events = arrayList_events;
+
+        lock_arrayList_events.writeLock().unlock();
     }
 
     /**
      * Set a new set of ResponseTypes that can be used by the Dynamic Dialog System.
      *
-     * @param arrayList_events
+     * @param arrayList_responseTypes
      *         The ResponseTypes that can be used by the Dynamic Dialog system.
      */
-    public void setResponseTypes(final ArrayList<String> arrayList_events) {
-        this.arrayList_events = arrayList_events;
+    public void setResponseTypes(final ArrayList<String> arrayList_responseTypes) {
+        lock_arrayList_responseTypes.writeLock().lock();
+
+        this.arrayList_responseTypes = arrayList_responseTypes;
+
+        lock_arrayList_responseTypes.writeLock().lock();
     }
 
     /**
