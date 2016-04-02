@@ -180,6 +180,7 @@ public class Criterion implements Serializable {
 
                     case NOT_EQUAL_TO: {
                         isTrue = (!Objects.equals(thisInteger, otherInteger));
+                        break;
                     }
 
                     default: {
