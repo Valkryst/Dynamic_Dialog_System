@@ -384,8 +384,25 @@ public class DataManager implements Serializable {
     }
 
 
-
-
+    /**
+     * Adds the specified User into the Dynamic Dialog System.
+     * If a User with the same ID as the specified User already
+     * exists, then no duplicate is added.
+     *
+     * @param user
+     *         The User to add.
+     *
+     * @throws
+     *         If a User with the same ID as the specified
+     *         User already exists.
+     */
+    public void addUser(final User user) throws IllegalArgumentException {
+        if(! hashMap_users.containsKey(user.getId())) {
+            hashMap_users.put(user.getId(), user);
+        } else {
+            throw new IllegalArgumentException("A user with the ID " + user.getId() + " already exists.");
+        }
+    }
 
     /**
      * Adds the specified Event into the Dynamic Dialog System.
