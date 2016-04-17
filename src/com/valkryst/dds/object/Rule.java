@@ -1,4 +1,4 @@
-package data;
+package com.valkryst.dds.object;
 
 import java.io.Serializable;
 
@@ -13,7 +13,7 @@ public class Rule implements Serializable {
     private long lastUsedTime;
 
     /**
-     * Construct a new Rule with the specified data.
+     * Construct a new Rule with the specified com.valkryst.data.
      *
      * @param event
      *         The Event which triggers the use of the Rule.

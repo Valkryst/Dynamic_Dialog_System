@@ -1,4 +1,4 @@
-package data.collection;
+package com.valkryst.dds.collection;
 
 import java.io.Serializable;
 
@@ -21,12 +21,12 @@ public class SplayTree<Key extends Comparable<Key>, Value>  implements Serializa
 
     private Node root;   // root of the BST
 
-    // BST helper node data type
+    // BST helper node com.valkryst.data type
     private class Node implements Serializable {
         private static final long serialVersionUID = -5260458261830755327L;
 
         private Key key;            // key
-        private Value value;        // associated data
+        private Value value;        // associated com.valkryst.data
         private Node left, right;   // left and right subtrees
 
         public Node(Key key, Value value) {

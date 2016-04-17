@@ -1,10 +1,10 @@
-package handler;
+package com.valkryst.dds.manager;
 
 import javafx.scene.media.AudioClip;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class AudioHandler {
+public class AudioManager {
     /** A list containing all audio files that have been loaded. */
     private final ConcurrentLinkedQueue<AudioClip> loadedAudioClips = new ConcurrentLinkedQueue<>();
     // todo JavaDoc

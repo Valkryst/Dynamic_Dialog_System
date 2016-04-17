@@ -1,4 +1,4 @@
-package data;
+package com.valkryst.dds.object;
 
 import java.io.Serializable;
 
@@ -7,17 +7,17 @@ public class Response implements Serializable {
 
     /** The type of response. */
     private final String responseType;
-    /** The data which may or may not be used depending on the response type. */
+    /** The com.valkryst.data which may or may not be used depending on the response type. */
     private final String value;
 
     /**
-     * Construct a new Response with the specified data.
+     * Construct a new Response with the specified com.valkryst.data.
      *
      * @param responseType
      *         The type of response.
      *
      * @param value
-     *         The raw data.
+     *         The raw com.valkryst.data.
      */
     public Response(final String responseType, final String value) {
         this.responseType = responseType;
@@ -38,7 +38,7 @@ public class Response implements Serializable {
         return responseType;
     }
 
-    /** The raw data. */
+    /** The raw com.valkryst.data. */
     public String getValue() {
         return value;
     }

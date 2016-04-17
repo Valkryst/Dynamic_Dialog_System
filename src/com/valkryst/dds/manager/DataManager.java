@@ -1,7 +1,8 @@
-package data.collection;
+package com.valkryst.dds.manager;
 
 import com.google.common.collect.ArrayListMultimap;
-import data.*;
+import com.valkryst.dds.collection.SplayTree;
+import com.valkryst.dds.object.*;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -55,23 +56,23 @@ public class DataManager implements Serializable {
     private ConcurrentHashMap<Rule, Long> hashMap_rules_lastUsedTime = new ConcurrentHashMap<>();
 
 
-    /** The Lock of the arrayList_events data structure. */
+    /** The Lock of the arrayList_events com.valkryst.data structure. */
     private final ReentrantReadWriteLock lock_arrayList_events = new ReentrantReadWriteLock();
-    /** The Lock of the arrayList_responseTypes data structure. */
+    /** The Lock of the arrayList_responseTypes com.valkryst.data structure. */
     private final ReentrantReadWriteLock lock_arrayList_responseTypes = new ReentrantReadWriteLock();
-    /** The Lock of the arrayList_criterion data structure. */
+    /** The Lock of the arrayList_criterion com.valkryst.data structure. */
     private final ReentrantReadWriteLock lock_arrayList_criterion = new ReentrantReadWriteLock();
-    /** The Lock of the arrayList_response data structure. */
+    /** The Lock of the arrayList_response com.valkryst.data structure. */
     private final ReentrantReadWriteLock lock_arrayList_responses = new ReentrantReadWriteLock();
-    /** The Lock of the arrayList_rules data structure. */
+    /** The Lock of the arrayList_rules com.valkryst.data structure. */
     private final ReentrantReadWriteLock lock_arrayList_rules = new ReentrantReadWriteLock();
-    /** The Lock of the arrayList_contextNames data structure. */
+    /** The Lock of the arrayList_contextNames com.valkryst.data structure. */
     private final ReentrantReadWriteLock lock_arrayList_contextNames = new ReentrantReadWriteLock();
-    /** The Lock of the arrayListMultimap_ruleEventAssociations data structure. */
+    /** The Lock of the arrayListMultimap_ruleEventAssociations com.valkryst.data structure. */
     private final ReentrantReadWriteLock lock_arrayListMultimap_ruleEventAssociations = new ReentrantReadWriteLock();
-    /** The Lock of the arrayListMultimap_ruleResponseAssociations data structure. */
+    /** The Lock of the arrayListMultimap_ruleResponseAssociations com.valkryst.data structure. */
     private final ReentrantReadWriteLock lock_arrayListMultimap_ruleResponseAssociations = new ReentrantReadWriteLock();
-    /** The Lock of the arrayListMultimap_ruleCriterionAssociations data structure. */
+    /** The Lock of the arrayListMultimap_ruleCriterionAssociations com.valkryst.data structure. */
     private final ReentrantReadWriteLock lock_arrayListMultimap_ruleCriterionAssociations = new ReentrantReadWriteLock();
 
     /**
@@ -317,7 +318,7 @@ public class DataManager implements Serializable {
      *        might have a ValueType of Integer. If this is the case, then
      *        the Object returned will be an integer.
      *
-     *        If anything goes wrong, String of data itself is returned.
+     *        If anything goes wrong, String of com.valkryst.data itself is returned.
      */
     public Object getValue(final long userId, final String key) {
         final User user = hashMap_users.get(userId);

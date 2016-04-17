@@ -1,6 +1,6 @@
-package data;
+package com.valkryst.dds.object;
 
-import data.collection.SplayTree;
+import com.valkryst.dds.collection.SplayTree;
 
 import java.io.Serializable;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -14,7 +14,7 @@ public class User implements Serializable {
     /** The SplayTree containing all currently loaded Contexts, with their Names as Keys. */
     private SplayTree<String, Context> splayTree_context = new SplayTree<>();
 
-    /** The Lock of the splayTree_context data structure. */
+    /** The Lock of the splayTree_context com.valkryst.data structure. */
     private ReentrantReadWriteLock lock_splayTree_context = new ReentrantReadWriteLock();
 
     /**
@@ -57,7 +57,7 @@ public class User implements Serializable {
         return context;
     }
 
-    /** @return The Lock of the splayTree_context data structure. */
+    /** @return The Lock of the splayTree_context com.valkryst.data structure. */
     public ReentrantReadWriteLock getLock_splayTree_context() {
         return lock_splayTree_context;
     }

@@ -1,4 +1,4 @@
-package data;
+package com.valkryst.dds.object;
 
 import java.io.Serializable;
 
