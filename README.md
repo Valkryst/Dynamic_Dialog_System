@@ -8,7 +8,7 @@ http://www.gdcvault.com/play/1015317/AI-driven-Dynamic-Dialog-through
 
 ##Setup:
 
-This is a very rough setup guide specifically written for IntelliJ.
+This is a very rough setup guide using IntelliJ.
 
 * Clone the repo.
 * Open the project in IntelliJ.
@@ -16,7 +16,7 @@ This is a very rough setup guide specifically written for IntelliJ.
 * Open your project in IntelliJ.
 * Add the DDS as a module to your project.
 
-Now that the DDS has been sucessfully added as a module to your project, you'll need to create your own ResponeManager and carefully consider the Events and ResponseTypes that you wish to use.
+Now that the DDS has been sucessfully added as a module to your project, you'll need to create your own ResponseManager and carefully consider the Events and ResponseTypes that you wish to use.
 
 ##ResponseManager:
 
