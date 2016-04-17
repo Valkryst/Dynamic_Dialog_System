@@ -395,7 +395,7 @@ public class DataManager implements Serializable {
      *         The Event to add.
      */
     public void addEvent(final String event) {
-        lock_arrayList_events.writeLock();
+        lock_arrayList_events.writeLock().lock();
 
         if(! arrayList_events.contains(event)) {
             arrayList_events.add(event);
