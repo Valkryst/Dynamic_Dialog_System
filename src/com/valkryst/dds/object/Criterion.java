@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.Objects;
 
 public class Criterion implements Serializable {
-    private static final long serialVersionUID = 183257350555918563L;
+    private static final long serialVersionUID = -7479779125882019268L;
 
     /** The Context to compare to the comparisonValue when evaluating whether or not the Criterion isTrue. */
     private final Context context;
@@ -14,6 +14,8 @@ public class Criterion implements Serializable {
     private final ValueType comparisonValue_valueType;
     /** The value to be compared with the Context when evaluating whether or not the Criterion isTrue. */
     private final String comparisonValue;
+    /** The weight, or importance, of the Criterion to be used when determining whether or not a Rule should be responded to. */
+    private double weight;
     /** Whether the Criterion evaluates to true or false. */
     private boolean isTrue;
 
@@ -32,14 +34,18 @@ public class Criterion implements Serializable {
      * @param comparisonValue
      *         The value to be compared with the Context when evaluating whether or not the Criterion isTrue.
      *
+     * @param weight
+     *         The weight, or importance, of the Criterion to be used when determining whether or not a Rule should be responded to.
+     *
      * @param isTrue
      *         Whether the Criterion evaluates to true or false.
      */
-    public Criterion(final Context context, final ComparisonType comparisonType, final ValueType comparisonValue_valueType, final String comparisonValue, final boolean isTrue) {
+    public Criterion(final Context context, final ComparisonType comparisonType, final ValueType comparisonValue_valueType, final String comparisonValue, final double weight, final boolean isTrue) {
         this.context = context;
         this.comparisonType = comparisonType;
         this.comparisonValue_valueType = comparisonValue_valueType;
         this.comparisonValue = comparisonValue;
+        this.weight = weight;
         this.isTrue = isTrue;
     }
 
@@ -375,6 +381,8 @@ public class Criterion implements Serializable {
                 "\t\t" + comparisonType.name() + "\n" +
                 "\tComparisonValue:\n" +
                 "\t\t" + comparisonValue + "\n" +
+                "\tWeight:\n" +
+                "\t\t" + weight + "\n" +
                 "\tIsTrue:\n" +
                 "\t\t" + isTrue + "\n";
     }
@@ -392,6 +400,11 @@ public class Criterion implements Serializable {
     /** @return The value to be compared with the Context when evaluating whether or not the Criterion isTrue. */
     public String getComparisonValue() {
         return comparisonValue;
+    }
+
+    /** @return The weight, or importance, of the Criterion to be used when determining whether or not a Rule should be responded to. */
+    private double getWeight() {
+        return weight;
     }
 
     /** @return Whether the Criterion evaluates to true or false. */
