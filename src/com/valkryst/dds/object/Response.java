@@ -7,17 +7,17 @@ public class Response implements Serializable {
 
     /** The type of response. */
     private final String responseType;
-    /** The com.valkryst.data which may or may not be used depending on the response type. */
+    /** The data which may or may not be used depending on the response type. */
     private final String value;
 
     /**
-     * Construct a new Response with the specified com.valkryst.data.
+     * Construct a new Response with the specified data.
      *
      * @param responseType
      *         The type of response.
      *
      * @param value
-     *         The raw com.valkryst.data.
+     *         The raw data.
      */
     public Response(final String responseType, final String value) {
         this.responseType = responseType;
@@ -38,7 +38,7 @@ public class Response implements Serializable {
         return responseType;
     }
 
-    /** The raw com.valkryst.data. */
+    /** The raw data. */
     public String getValue() {
         return value;
     }

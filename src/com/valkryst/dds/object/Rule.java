@@ -13,7 +13,7 @@ public class Rule implements Serializable {
     private long lastUsedTime;
 
     /**
-     * Construct a new Rule with the specified com.valkryst.data.
+     * Construct a new Rule with the specified data.
      *
      * @param event
      *         The Event which triggers the use of the Rule.

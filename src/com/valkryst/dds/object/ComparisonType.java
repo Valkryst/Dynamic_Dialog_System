@@ -63,7 +63,7 @@ public enum ComparisonType implements Serializable {
             }
             default: {
                 throw new IllegalArgumentException("A ComparisonType enum described by the String '" +
-                                                    comparisonType + "' does not exit.");
+                        comparisonType + "' does not exit.");
             }
         }
     }

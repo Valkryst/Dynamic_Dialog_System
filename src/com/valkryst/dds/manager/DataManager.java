@@ -53,23 +53,23 @@ public class DataManager implements Serializable {
     private ConcurrentHashMap<Rule, Long> hashMap_rules_lastUsedTime = new ConcurrentHashMap<>();
 
 
-    /** The Lock of the arrayList_events com.valkryst.data structure. */
+    /** The Lock of the arrayList_events data structure. */
     private final ReentrantReadWriteLock lock_arrayList_events = new ReentrantReadWriteLock();
-    /** The Lock of the arrayList_responseTypes com.valkryst.data structure. */
+    /** The Lock of the arrayList_responseTypes data structure. */
     private final ReentrantReadWriteLock lock_arrayList_responseTypes = new ReentrantReadWriteLock();
-    /** The Lock of the arrayList_criterion com.valkryst.data structure. */
+    /** The Lock of the arrayList_criterion data structure. */
     private final ReentrantReadWriteLock lock_arrayList_criterion = new ReentrantReadWriteLock();
-    /** The Lock of the arrayList_response com.valkryst.data structure. */
+    /** The Lock of the arrayList_response data structure. */
     private final ReentrantReadWriteLock lock_arrayList_responses = new ReentrantReadWriteLock();
-    /** The Lock of the arrayList_rules com.valkryst.data structure. */
+    /** The Lock of the arrayList_rules data structure. */
     private final ReentrantReadWriteLock lock_arrayList_rules = new ReentrantReadWriteLock();
-    /** The Lock of the arrayList_contextNames com.valkryst.data structure. */
+    /** The Lock of the arrayList_contextNames data structure. */
     private final ReentrantReadWriteLock lock_arrayList_contextNames = new ReentrantReadWriteLock();
-    /** The Lock of the arrayListMultimap_ruleEventAssociations com.valkryst.data structure. */
+    /** The Lock of the arrayListMultimap_ruleEventAssociations data structure. */
     private final ReentrantReadWriteLock lock_arrayListMultimap_ruleEventAssociations = new ReentrantReadWriteLock();
-    /** The Lock of the arrayListMultimap_ruleResponseAssociations com.valkryst.data structure. */
+    /** The Lock of the arrayListMultimap_ruleResponseAssociations data structure. */
     private final ReentrantReadWriteLock lock_arrayListMultimap_ruleResponseAssociations = new ReentrantReadWriteLock();
-    /** The Lock of the arrayListMultimap_ruleCriterionAssociations com.valkryst.data structure. */
+    /** The Lock of the arrayListMultimap_ruleCriterionAssociations data structure. */
     private final ReentrantReadWriteLock lock_arrayListMultimap_ruleCriterionAssociations = new ReentrantReadWriteLock();
 
     /**
@@ -149,9 +149,9 @@ public class DataManager implements Serializable {
              * used and use it.
              */
             final Rule rule = set_triggeredRules.parallelStream()
-                                                .sorted((ruleA, ruleB) -> Long.compare(ruleA.getLastUsedTime(), ruleB.getLastUsedTime()))
-                                                .findFirst()
-                                                .get();
+                    .sorted((ruleA, ruleB) -> Long.compare(ruleA.getLastUsedTime(), ruleB.getLastUsedTime()))
+                    .findFirst()
+                    .get();
 
             rule.updateLastUsedTime();
             publishResponses(arrayListMultimap_ruleResponseAssociations.get(rule));
@@ -210,8 +210,8 @@ public class DataManager implements Serializable {
             final double score_maximum = arrayList_scores.get(0);
 
             final Rule[] array_sortedRulesByLUUT = set_triggeredRules.parallelStream()
-                                                                     .sorted((ruleA, ruleB) -> Long.compare(ruleA.getLastUsedTime(), ruleB.getLastUsedTime()))
-                                                                     .toArray(Rule[]::new);
+                    .sorted((ruleA, ruleB) -> Long.compare(ruleA.getLastUsedTime(), ruleB.getLastUsedTime()))
+                    .toArray(Rule[]::new);
             final double luut_minimum = array_sortedRulesByLUUT[0].getLastUsedTime();
             final double luut_maximum = array_sortedRulesByLUUT[array_sortedRulesByLUUT.length - 1].getLastUsedTime();
 
@@ -290,10 +290,10 @@ public class DataManager implements Serializable {
      */
     private void publishResponses(final List<Response> responses) {
         responses.parallelStream()
-                 .forEach(response -> {
-                     arrayList_responseSubscribers.parallelStream()
-                                                  .forEach(subscriber -> subscriber.handleResponse(this, response));
-                 });
+                .forEach(response -> {
+                    arrayList_responseSubscribers.parallelStream()
+                            .forEach(subscriber -> subscriber.handleResponse(this, response));
+                });
     }
 
 
@@ -319,7 +319,7 @@ public class DataManager implements Serializable {
      *        might have a ValueType of Integer. If this is the case, then
      *        the Object returned will be an integer.
      *
-     *        If anything goes wrong, String of com.valkryst.data itself is returned.
+     *        If anything goes wrong, String of data itself is returned.
      */
     public Object getValue(final long userId, final String key) {
         final User user = hashMap_users.get(userId);
@@ -380,9 +380,9 @@ public class DataManager implements Serializable {
      */
     public void setValue(final long userId, final String key, final String newValue) {
         hashMap_users.get(userId)
-                     .getSplayTree_context()
-                     .get(key)
-                     .setValue(newValue);
+                .getSplayTree_context()
+                .get(key)
+                .setValue(newValue);
     }
 
 
@@ -434,8 +434,8 @@ public class DataManager implements Serializable {
             user.getValue().getLock_splayTree_context().writeLock().lock();
 
             user.getValue()
-                .getSplayTree_context()
-                .put(context.getName(), context);
+                    .getSplayTree_context()
+                    .put(context.getName(), context);
 
             user.getValue().getLock_splayTree_context().writeLock().unlock();
         }
@@ -473,13 +473,13 @@ public class DataManager implements Serializable {
         lock_arrayList_criterion.readLock().lock();
 
         arrayList_criterion.parallelStream()
-                           .filter(criterion -> criterion != null)
-                           .filter(criterion -> criterion.getContext().equals(context))
-                           .forEach(criterion -> {
-                               throw new UnsupportedOperationException("The following Context is still in-use by the following Criterion" +
-                                                                       ", it cannot be removed from the Dynamic Dialog System.\n" +
-                                                                       context.toString() + "\n\n" + criterion.toString());
-                           });
+                .filter(criterion -> criterion != null)
+                .filter(criterion -> criterion.getContext().equals(context))
+                .forEach(criterion -> {
+                    throw new UnsupportedOperationException("The following Context is still in-use by the following Criterion" +
+                            ", it cannot be removed from the Dynamic Dialog System.\n" +
+                            context.toString() + "\n\n" + criterion.toString());
+                });
 
         lock_arrayList_criterion.readLock().unlock();
 
@@ -561,13 +561,13 @@ public class DataManager implements Serializable {
         lock_arrayList_rules.readLock().lock();
 
         arrayList_rules.parallelStream()
-                       .filter(rule -> rule != null)
-                       .filter(rule -> arrayListMultimap_ruleCriterionAssociations.get(rule).contains(criterion))
-                       .forEach(rule -> {
-                           throw new UnsupportedOperationException("The following Criterion is still in-use by the following Rule" +
-                                                                   ", it cannot be removed from the Dynamic Dialog System.\n" +
-                                                                   criterion.toString() + "\n\n" + rule.toString());
-                       });
+                .filter(rule -> rule != null)
+                .filter(rule -> arrayListMultimap_ruleCriterionAssociations.get(rule).contains(criterion))
+                .forEach(rule -> {
+                    throw new UnsupportedOperationException("The following Criterion is still in-use by the following Rule" +
+                            ", it cannot be removed from the Dynamic Dialog System.\n" +
+                            criterion.toString() + "\n\n" + rule.toString());
+                });
 
         lock_arrayList_rules.readLock().unlock();
 
@@ -610,13 +610,13 @@ public class DataManager implements Serializable {
         lock_arrayList_rules.readLock().lock();
 
         arrayList_rules.parallelStream()
-                       .filter(rule -> rule != null)
-                       .filter(rule -> arrayListMultimap_ruleResponseAssociations.get(rule).contains(response))
-                       .forEach(rule -> {
-                           throw new UnsupportedOperationException("The following Response is still in-use by the following Rule" +
-                                                                   ", it cannot be removed from the Dynamic Dialog System.\n" +
-                                                                   response.toString() + "\n\n" + rule.toString());
-                       });
+                .filter(rule -> rule != null)
+                .filter(rule -> arrayListMultimap_ruleResponseAssociations.get(rule).contains(response))
+                .forEach(rule -> {
+                    throw new UnsupportedOperationException("The following Response is still in-use by the following Rule" +
+                            ", it cannot be removed from the Dynamic Dialog System.\n" +
+                            response.toString() + "\n\n" + rule.toString());
+                });
 
         lock_arrayList_rules.readLock().unlock();
 
@@ -731,7 +731,7 @@ public class DataManager implements Serializable {
         lock_arrayListMultimap_ruleEventAssociations.writeLock().lock();
 
         arrayListMultimap_ruleEventAssociations.entries()
-                                               .removeIf(entry -> entry.getValue().equals(rule));
+                .removeIf(entry -> entry.getValue().equals(rule));
 
         lock_arrayListMultimap_ruleEventAssociations.writeLock().unlock();
     }
@@ -855,14 +855,14 @@ public class DataManager implements Serializable {
         lock_arrayListMultimap_ruleEventAssociations.readLock().lock();
 
         arrayListMultimap_ruleEventAssociations.entries()
-                                                      .parallelStream()
-                                                      .filter(entry -> entry.getValue().equals(rule))
-                                                      .forEach(entry -> list_associatedEvents.add(entry.getKey()));
+                .parallelStream()
+                .filter(entry -> entry.getValue().equals(rule))
+                .forEach(entry -> list_associatedEvents.add(entry.getKey()));
 
         lock_arrayListMultimap_ruleEventAssociations.readLock().unlock();
 
         return list_associatedEvents;
-}
+    }
 
     /**
      * Locates all Responses associated with the specified Rule.

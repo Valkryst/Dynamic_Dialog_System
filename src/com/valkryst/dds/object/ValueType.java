@@ -100,7 +100,7 @@ public enum ValueType implements Serializable {
                 }
 
                 throw new IllegalArgumentException("A ValueType enum described by the String '" +
-                                                    valueType + "' does not exit.");
+                        valueType + "' does not exit.");
             }
         }
     }

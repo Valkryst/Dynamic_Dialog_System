@@ -10,7 +10,7 @@ public class Criterion implements Serializable {
     private final Context context;
     /** The operator to use when comparing the Context and comparisonValue. */
     private final ComparisonType comparisonType;
-    /** The type of com.valkryst.data held within the comparisonValue variable. */
+    /** The type of data held within the comparisonValue variable. */
     private final ValueType comparisonValue_valueType;
     /** The value to be compared with the Context when evaluating whether or not the Criterion isTrue. */
     private final String comparisonValue;
@@ -18,7 +18,7 @@ public class Criterion implements Serializable {
     private boolean isTrue;
 
     /**
-     * Construct a new Criterion with the specified com.valkryst.data.
+     * Construct a new Criterion with the specified data.
      *
      * @param context
      *         The Context to compare to the comparisonValue when evaluating whether or not the Criterion isTrue.
@@ -27,7 +27,7 @@ public class Criterion implements Serializable {
      *         The operator to use when comparing the Context and comparisonValue.
      *
      * @param comparisonValue_valueType
-     *         The type of com.valkryst.data held within the comparisonValue variable.
+     *         The type of data held within the comparisonValue variable.
      *
      * @param comparisonValue
      *         The value to be compared with the Context when evaluating whether or not the Criterion isTrue.
@@ -57,8 +57,8 @@ public class Criterion implements Serializable {
     public void update() throws UnsupportedOperationException {
         if(context.getValueType() != comparisonValue_valueType) {
             throw new UnsupportedOperationException("The value type of the following Context does not match the " +
-                                                    "ComparisonValue_ValueType of this Criterion.\n" +
-                                                     context.toString() + comparisonValue_valueType);
+                    "ComparisonValue_ValueType of this Criterion.\n" +
+                    context.toString() + comparisonValue_valueType);
         }
 
         switch(comparisonValue_valueType) {
