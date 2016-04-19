@@ -40,13 +40,19 @@ public class Criterion implements Serializable {
      * @param isTrue
      *         Whether the Criterion evaluates to true or false.
      */
-    public Criterion(final Context context, final ComparisonType comparisonType, final ValueType comparisonValue_valueType, final String comparisonValue, final double weight, final boolean isTrue) {
+    public Criterion(final Context context, final ComparisonType comparisonType, final ValueType comparisonValue_valueType, final String comparisonValue, final double weight, final boolean isTrue)  throws IllegalArgumentException {
         this.context = context;
         this.comparisonType = comparisonType;
         this.comparisonValue_valueType = comparisonValue_valueType;
         this.comparisonValue = comparisonValue;
-        this.weight = weight;
         this.isTrue = isTrue;
+
+        // Ensure the specified weight is within the allowed range.
+        if(weight > 1) {
+            throw new IllegalArgumentException("A Criterion cannot have a weight greater than 1.");
+        } else if(weight < 0) {
+            throw new IllegalArgumentException("A Criterion cannot have a weight less than 0.");
+        }
     }
 
     /**
