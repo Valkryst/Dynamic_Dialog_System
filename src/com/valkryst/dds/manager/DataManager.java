@@ -5,10 +5,7 @@ import com.valkryst.dds.collection.SplayTree;
 import com.valkryst.dds.object.*;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -24,8 +21,8 @@ public class DataManager implements Serializable {
     /** The ResponseTypes that can be used by the Dynamic Dialog System. */
     private ArrayList<String> arrayList_responseTypes;
 
-    /** The ResponseManager used to handle all events of the Dynamic Dialog System. */
-    private ResponseManager responseManager;
+    /** The ArrayList of all objects to be notified whenever a Response is determined to be responded to. */
+    private ArrayList<Notifiable> arrayList_responseSubscribers = new ArrayList<>();
 
 
 
@@ -134,7 +131,7 @@ public class DataManager implements Serializable {
             // Do Nothing
         } else if (totalScoredRules == 1) {
             // If only one Rule is found, then respond to it.
-            handleResponse(arrayListMultimap_ruleResponseAssociations.get(set_triggeredRules.get(0)));
+            publishResponses(arrayListMultimap_ruleResponseAssociations.get(set_triggeredRules.get(0)));
 
         } else if (set_triggeredRules.parallelStream().anyMatch(rule -> rule.getLastUsedTime() == 0)) {
             /*
@@ -144,7 +141,7 @@ public class DataManager implements Serializable {
             final Rule rule = set_triggeredRules.parallelStream().filter(r -> r.getLastUsedTime() == 0).findAny().get();
 
             rule.updateLastUsedTime();
-            handleResponse(arrayListMultimap_ruleResponseAssociations.get(rule));
+            publishResponses(arrayListMultimap_ruleResponseAssociations.get(rule));
 
         } else if(set_triggeredRules.parallelStream().allMatch(r -> arrayListMultimap_ruleCriterionAssociations.get(r).size() == 0)) {
             /*
@@ -157,7 +154,7 @@ public class DataManager implements Serializable {
                                                 .get();
 
             rule.updateLastUsedTime();
-            handleResponse(arrayListMultimap_ruleResponseAssociations.get(rule));
+            publishResponses(arrayListMultimap_ruleResponseAssociations.get(rule));
         } else {
                 /*
                  * The next step is to determine which Response to use.
@@ -254,7 +251,7 @@ public class DataManager implements Serializable {
             final int indexToUse = random.nextInt(arrayList_incidesToUse.size());
 
             set_triggeredRules.get(indexToUse).updateLastUsedTime();
-            handleResponse(arrayListMultimap_ruleResponseAssociations.get(set_triggeredRules.get(indexToUse)));
+            publishResponses(arrayListMultimap_ruleResponseAssociations.get(set_triggeredRules.get(indexToUse)));
         }
     }
 
@@ -285,14 +282,18 @@ public class DataManager implements Serializable {
         return numerator / denominator;
     }
 
-
-    private void handleResponse(final List<Response> responses) throws IllegalStateException {
-        if(responseManager == null) {
-            throw new IllegalStateException("A ResponseManager has not been set, the Dynamic Dialog System cannot handle any responses.");
-        } else {
-            responses.parallelStream()
-                     .forEach(response -> responseManager.respond(this, response));
-        }
+    /**
+     * Publishes the specified Responses to all Response subscribers.
+     *
+     * @param responses
+     *         The Responses to publish.
+     */
+    private void publishResponses(final List<Response> responses) {
+        responses.parallelStream()
+                 .forEach(response -> {
+                     arrayList_responseSubscribers.parallelStream()
+                                                  .forEach(subscriber -> subscriber.handleResponse(this, response));
+                 });
     }
 
 
@@ -448,6 +449,19 @@ public class DataManager implements Serializable {
     }
 
     /**
+     * Removes the specified User from the Dynamic Dialog System.
+     *
+     * If no User matching the exact ID and User object of the
+     * specified User is found, then nothing happens.
+     *
+     * @param user
+     *         The User to remove.
+     */
+    public void removeUser(final User user) {
+        hashMap_users.remove(user.getId(), user);
+    }
+
+    /**
      * Removes the specified Context from the Dynamic Dialog System.
      *
      * @param context
@@ -493,6 +507,32 @@ public class DataManager implements Serializable {
         arrayList_contextNames.remove(context.getName());
 
         lock_arrayList_contextNames.writeLock().unlock();
+    }
+
+    /**
+     * Adds the specified Notifiable subscriber to the Dynamic Dialog System.
+     *
+     * Duplicate entries will be ignored.
+     *
+     *
+     * @param subscriber
+     *         The Notifiable subscriber to add into the Dynamic Dialog System.
+     */
+    public void addResponseSubscriber(final Notifiable subscriber) {
+        if(! arrayList_responseSubscribers.contains(subscriber)) {
+            arrayList_responseSubscribers.add(subscriber);
+        }
+    }
+
+    /**
+     * Removes the specified Notifable subscriber from the Dynamic Dialog System.
+     *
+     *
+     * @param subscriber
+     *         The Notifiable subscriber to remove from the Dynamic Dialog System.
+     */
+    public void removeResponseSubscriber(final Notifiable subscriber) {
+        arrayList_responseSubscribers.remove(subscriber);
     }
 
     /**
@@ -732,10 +772,6 @@ public class DataManager implements Serializable {
 
 
 
-    /** @return The ResponseManager used to handle all events of the Dynamic Dialog System. */
-    public ResponseManager getResponseManager() {
-        return responseManager;
-    }
 
     /** @return A copy of the ArrayList containing all Rules, with their IDs as Keys. */
     public List<Rule> getRules() {
@@ -896,15 +932,5 @@ public class DataManager implements Serializable {
         this.arrayList_responseTypes = arrayList_responseTypes;
 
         lock_arrayList_responseTypes.writeLock().lock();
-    }
-
-    /**
-     * Set a new ResponseManager to use when handling responses.
-     *
-     * @param responseManager
-     *         The new ResponseManager used to handle all events of the Dynamic Dialog System.
-     */
-    public void setResponseManager(final ResponseManager responseManager) {
-        this.responseManager = responseManager;
     }
 }
