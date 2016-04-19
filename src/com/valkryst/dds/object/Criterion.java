@@ -409,7 +409,7 @@ public class Criterion implements Serializable {
     }
 
     /** @return The weight, or importance, of the Criterion to be used when determining whether or not a Rule should be responded to. */
-    private double getWeight() {
+    public double getWeight() {
         return weight;
     }
 
