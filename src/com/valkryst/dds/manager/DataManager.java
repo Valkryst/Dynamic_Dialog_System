@@ -12,6 +12,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class DataManager implements Serializable {
     private static final long serialVersionUID = 6158503022877874004L;
 
+    /** The Random to use where necessary. */
+    private final Random random = new Random(System.nanoTime());
+    /** The Publisher to use when handling Responses. */
+    private final Publisher publisher = new Publisher();
+
+
     /** The ConcurrentHashMap containing User IDs and the Users that they corrospond to. */
     private ConcurrentHashMap<Long, User> hashMap_users = new ConcurrentHashMap<>();
 
@@ -20,9 +26,6 @@ public class DataManager implements Serializable {
 
     /** The ResponseTypes that can be used by the Dynamic Dialog System. */
     private ArrayList<String> arrayList_responseTypes;
-
-    /** The ArrayList of all objects to be notified whenever a Response is determined to be responded to. */
-    private ArrayList<Notifiable> arrayList_responseSubscribers = new ArrayList<>();
 
 
 
@@ -119,140 +122,291 @@ public class DataManager implements Serializable {
     public void determineResponse(final String event) {
         // Determine the Triggered Rules and their Scores:
         final List<Rule> set_triggeredRules = arrayListMultimap_ruleEventAssociations.get(event);
-        final ArrayList<Integer> arrayList_scores = new ArrayList<>(set_triggeredRules.size());
+        final ConcurrentHashMap<Rule, Double> hashMap_scores = new ConcurrentHashMap<>();
 
         set_triggeredRules.parallelStream()
-                .forEachOrdered(rule -> arrayList_scores.add(updateRuleCriterion(rule)));
+                .forEachOrdered(rule -> {
+                    updateRuleCriterion(rule);
+                    hashMap_scores.put(rule, determineCriterionWeight(rule));
+                });
 
 
         final int totalScoredRules = set_triggeredRules.size();
 
-        if (totalScoredRules == 0) {
-            // Do Nothing
-        } else if (totalScoredRules == 1) {
-            // If only one Rule is found, then respond to it.
-            publishResponses(arrayListMultimap_ruleResponseAssociations.get(set_triggeredRules.get(0)));
+        if (totalScoredRules == 0) { // If no Rules were found
+            return;
+        } else if (totalScoredRules == 1) { // If one Rule was found
+            determineResponseCaseB(set_triggeredRules);
 
-        } else if (set_triggeredRules.parallelStream().anyMatch(rule -> rule.getLastUsedTime() == 0)) {
-            /*
-             * If there are multiple Rules found and any of them has never been used before,
-             * then use one of the Rules which hasn't been used before.
-             */
-            final Rule rule = set_triggeredRules.parallelStream().filter(r -> r.getLastUsedTime() == 0).findAny().get();
+        } else if (set_triggeredRules.parallelStream().anyMatch(rule -> rule.getLastUsedTime() == 0)) { // Multiple rules found, some not used before
+            determineResponseCaseC(set_triggeredRules, hashMap_scores);
 
-            rule.updateLastUsedTime();
-            publishResponses(arrayListMultimap_ruleResponseAssociations.get(rule));
+        } else if(set_triggeredRules.parallelStream().allMatch(r -> arrayListMultimap_ruleCriterionAssociations.get(r).size() == 0)) { // Multiple rules found, none have Criterion
+            determineResponseCaseD(set_triggeredRules);
 
-        } else if(set_triggeredRules.parallelStream().allMatch(r -> arrayListMultimap_ruleCriterionAssociations.get(r).size() == 0)) {
-            /*
-             * If none of the Rules have any Criterion, then find the Rule that was least recently
-             * used and use it.
-             */
-            final Rule rule = set_triggeredRules.parallelStream()
-                    .sorted((ruleA, ruleB) -> Long.compare(ruleA.getLastUsedTime(), ruleB.getLastUsedTime()))
-                    .findFirst()
-                    .get();
-
-            rule.updateLastUsedTime();
-            publishResponses(arrayListMultimap_ruleResponseAssociations.get(rule));
         } else {
-                /*
-                 * The next step is to determine which Response to use.
-                 *
-                 * The responses are already ordered from highest to lowest score,
-                 * so the chance to be used will be calculated by the following formula
-                 * because we can't just keep using whichever Response has the highest score
-                 * or else the game will become repetitive.
-                 *
-                 * Step #1:
-                 *      First we must use proportional scoring, so that the Response with the highest
-                 *      score is "100%" and the Response with the lowest score is "0%". Because the
-                 *      array of Responses is already sorted in order from highest score to lowest score,
-                 *      this part is simple.
-                 *      To determine the score of all Responses between these two, the following formula
-                 *      must be used.
-                 *
-                 *              ((currScore - lowestScore) / (highestScore - lowestScore)) * 100 = Score_Percentage
-                 *
-                 * Step #2:
-                 *      Same reasoning as above, but for the LastUsed_UnixTime values. But instead of just using
-                 *      the LUUT values, we'll use the distances from the current time.
-                 *
-                 *              currLUUT = System.currentTimeMillis() - array_lastUsed_unixTime[i]
-                 *
-                 *              ((currLUUT - lowestLUUT) / (highestLUUT - lowestLUUT)) * 100 = LUUT_Percentage
-                 *
-                 * Step #3:
-                 *      We must weight our two criteria from the first two steps. The score is important and having
-                 *      a response which hasn't recently been used is less important.
-                 *
-                 *      So, the weights are worth:
-                 *          Score_Percentage = 60% = 0.6
-                 *          LUUT_Percentage = 40% = 0.4
-                 *
-                 * Step #4:
-                 *      The final score of each Response is determined as follows:
-                 *
-                 *          (Score_Percentage * 0.6) + (LUUT_Percentage * 0.4)
-                 *
-                 * Step #5:
-                 *      Use whichever Response has the highest final score.
-                 */
+            determineResponseCaseE(set_triggeredRules, hashMap_scores);
+        }
+    }
 
-            final ArrayList<Integer> arrayList_incidesToUse = new ArrayList<>();
+    /**
+     * If only one Rule was found in the set of triggered rules,
+     * then respond to it.
+     *
+     * @param list_triggeredRules
+     *         The Rules of which one will be responded to.
+     */
+    private void determineResponseCaseB(final List<Rule> list_triggeredRules) {
+        // If only one Rule is found, then respond to it.
+        list_triggeredRules.get(0).updateLastUsedTime();
+        publisher.publishResponses(this, arrayListMultimap_ruleResponseAssociations.get(list_triggeredRules.get(0)));
+    }
+
+    /**
+     * If multiple Rules were found in the set of triggered rules,
+     * then the Rule with the highest Criterion weight and which has
+     * never been run before will be used.
+     *
+     * @param list_triggeredRules
+     *         The Rules of which one will be responded to.
+     */
+    private void determineResponseCaseC(final List<Rule> list_triggeredRules, final ConcurrentHashMap<Rule, Double> hashMap_scores) {
+        double highestWeight = 0;
+        Rule ruleWithHighestWeight = null;
+
+        for(final Rule rule : list_triggeredRules) {
+            double currentWeight = hashMap_scores.get(rule);
+
+            if(currentWeight > highestWeight) {
+                highestWeight = currentWeight;
+                ruleWithHighestWeight = rule;
+            }
+        }
 
 
-            double highestScore = 0;
-            final long currentTime = System.currentTimeMillis();
-            int counter = 0;
 
-            final double score_minimum = arrayList_scores.get(set_triggeredRules.size() - 1);
-            final double score_maximum = arrayList_scores.get(0);
+        if(ruleWithHighestWeight == null) {
+            throw new IllegalStateException("The algorithm to determine which Rule to use, when there exists " +
+                    " a Rule that has not been run before, has not chosen a Rule to " +
+                    "respond to.");
+        } else {
+            ruleWithHighestWeight.updateLastUsedTime();
+            publisher.publishResponses(this, arrayListMultimap_ruleResponseAssociations.get(ruleWithHighestWeight));
+        }
+    }
 
-            final Rule[] array_sortedRulesByLUUT = set_triggeredRules.parallelStream()
-                    .sorted((ruleA, ruleB) -> Long.compare(ruleA.getLastUsedTime(), ruleB.getLastUsedTime()))
-                    .toArray(Rule[]::new);
-            final double luut_minimum = array_sortedRulesByLUUT[0].getLastUsedTime();
-            final double luut_maximum = array_sortedRulesByLUUT[array_sortedRulesByLUUT.length - 1].getLastUsedTime();
+    /**
+     * If multiple Rules were found in the set of triggered rules
+     * and none of them have any associated Criterion, then the
+     * Rule that was least recently used will be used.
+     *
+     * @param list_triggeredRules
+     *         The Rules of which one will be responded to.
+     */
+    private void determineResponseCaseD(final List<Rule> list_triggeredRules) {
+        final Rule rule = list_triggeredRules.parallelStream()
+                .sorted((ruleA, ruleB) -> Long.compare(ruleA.getLastUsedTime(), ruleB.getLastUsedTime()))
+                .findFirst()
+                .get();
 
-            for(final Rule rule : set_triggeredRules) {
+        rule.updateLastUsedTime();
+        publisher.publishResponses(this, arrayListMultimap_ruleResponseAssociations.get(rule));
+    }
+
+    /**
+     * If multiple Rules were found in the set of triggered rules
+     * and no other case applies, then a weighted average is done
+     * taking into account both the scores and the last used times
+     * of each Rule to determine which Rule to use.
+     *
+     * All Rules with no Criterion will be ignored.
+     *
+     * @param list_triggeredRules
+     *         The Rules of which one or more will be responded to.
+     *
+     * @param hashMap_scores
+     *         todo JavaDoc
+     */
+    private void determineResponseCaseE(final List<Rule> list_triggeredRules, final ConcurrentHashMap<Rule, Double> hashMap_scores) {
+        final ArrayList<Integer> arrayList_incidesToUse = new ArrayList<>();
+
+
+        double highestScore = 0;
+        final long currentTime = System.currentTimeMillis();
+        int counter = 0;
+
+        final double lowestCriterionScore = getLowestCriterionScore(list_triggeredRules, hashMap_scores);
+        final double highestCriterionScore = getHighestCriterionScore(list_triggeredRules, hashMap_scores);
+
+        final double oldestLastUsedTime = getOldestLastUsedTime(list_triggeredRules);
+        final double newestLastUsedTime = getNewestLastUsedTime(list_triggeredRules);
+
+        for(final Rule rule : list_triggeredRules) {
                 /*
                  * If there are Criterion associated with the Rule and at-least one of them evaluates
                  * to TRUE, then continue.
                  *
+                 * AND
+                 *
                  * If there are no Criterion associated with the Rule, then continue.
                  */
-                if(arrayList_scores.get(counter) > 0 && getAssociatedCriterions(rule).size() != 0) {
-                    final double normalizedScore = normalize(arrayList_scores.get(counter), score_minimum, score_maximum);
-                    final double normalizedLUUT = normalize(rule.getLastUsedTime(), luut_minimum, luut_maximum) * (currentTime - rule.getLastUsedTime())/1000;
+            if(hashMap_scores.get(rule) > 0 && getAssociatedCriterions(rule).size() != 0) {
+                final double normalizedScore = normalize(hashMap_scores.get(rule), lowestCriterionScore, highestCriterionScore);
+                final double normalizedLUUT = normalize(rule.getLastUsedTime(), oldestLastUsedTime, newestLastUsedTime) * (currentTime - rule.getLastUsedTime())/1000;
 
-                    double finalScore = (normalizedScore * 0.6f) + (normalizedLUUT * 0.4f);
+                double finalScore = (normalizedScore * 0.6f) + (normalizedLUUT * 0.4f);
 
-                    if (finalScore > highestScore) {
-                        arrayList_incidesToUse.clear();
-                        highestScore = finalScore;
-                    }
-
+                if(finalScore > highestScore) {
+                    arrayList_incidesToUse.clear();
+                    highestScore = finalScore;
+                } else if(finalScore == highestScore) {
                     arrayList_incidesToUse.add(counter);
                 }
-
-                counter ++;
             }
 
-
-            /*
-             * If there is only one Rule with the highest score, then use
-             * it.
-             *
-             * If there are multiple Rules that share the highest score,
-             * then randomly pick one to use.
-             */
-            final Random random = new Random(System.nanoTime());
-            final int indexToUse = random.nextInt(arrayList_incidesToUse.size());
-
-            set_triggeredRules.get(indexToUse).updateLastUsedTime();
-            publishResponses(arrayListMultimap_ruleResponseAssociations.get(set_triggeredRules.get(indexToUse)));
+            counter ++;
         }
+
+
+        /*
+         * If there is only one Rule with the highest score, then use
+         * it.
+         *
+         * If there are multiple Rules that share the highest score,
+         * then randomly pick one to use.
+         */
+        final int indexToUse = random.nextInt(arrayList_incidesToUse.size());
+
+        list_triggeredRules.get(indexToUse).updateLastUsedTime();
+        publisher.publishResponses(this, arrayListMultimap_ruleResponseAssociations.get(list_triggeredRules.get(indexToUse)));
+    }
+
+    /**
+     * Determines the lowest Criterion score from the specified
+     * Rule<->Score associations.
+     *
+     * @param list_triggeredRules
+     *         todo JavaDoc
+     *
+     * @param hashMap_scores
+     *         todo JavaDoc
+     *
+     * @return
+     *         The lowest Criterion score from the specified
+     *         Rule<->Score associations.
+     */
+    private double getLowestCriterionScore(final List<Rule> list_triggeredRules, final ConcurrentHashMap<Rule, Double> hashMap_scores) {
+        Double lowest = Double.MAX_VALUE;
+
+        for(final Rule rule : list_triggeredRules) {
+            Double currentVal = hashMap_scores.get(rule);
+
+            if(currentVal < lowest) {
+                lowest = currentVal;
+            }
+        }
+
+        return lowest;
+    }
+
+    /**
+     * Determines the lowest Criterion score from the specified
+     * Rule<->Score associations.
+     *
+     * @param list_triggeredRules
+     *         todo JavaDoc
+     *
+     * @param hashMap_scores
+     *         todo JavaDoc
+     *
+     * @return
+     *         The lowest Criterion score from the specified
+     *         Rule<->Score associations.
+     */
+    private double getHighestCriterionScore(final List<Rule> list_triggeredRules, final ConcurrentHashMap<Rule, Double> hashMap_scores) {
+        Double highest = Double.MIN_VALUE;
+
+        for(final Rule rule : list_triggeredRules) {
+            Double currentVal = hashMap_scores.get(rule);
+
+            if(currentVal > highest) {
+                highest = currentVal;
+            }
+        }
+
+        return highest;
+    }
+
+    /**
+     * Determines the oldest last used time of any Rule
+     * from the specified rules.
+     *
+     * @param list_triggeredRules
+     *         todo JavaDoc
+     *
+     * @return
+     *         The oldest last used time of any Rule
+     *         from the specified Rules.
+     */
+    private long getOldestLastUsedTime(final List<Rule> list_triggeredRules) {
+        long oldest = Long.MAX_VALUE;
+
+        for(final Rule rule : list_triggeredRules) {
+            if(rule.getLastUsedTime() < oldest) {
+                oldest = rule.getLastUsedTime();
+            }
+        }
+
+        return oldest;
+    }
+
+    /**
+     * Determines the newest last used time of any Rule
+     * from the specified rules.
+     *
+     * @param set_triggeredRules
+     *         todo JavaDoc
+     *
+     * @return
+     *         The newest last used time of any Rule
+     *         from the specified Rules.
+     */
+    private long getNewestLastUsedTime(final List<Rule> set_triggeredRules) {
+        long newest = Long.MIN_VALUE;
+
+        for(final Rule rule : set_triggeredRules) {
+            if(rule.getLastUsedTime() > newest) {
+                newest = rule.getLastUsedTime();
+            }
+        }
+
+        return newest;
+    }
+
+    /**
+     * Determines the weight of all Criterion that evaluate to TRUE
+     * for the specified Rule.
+     *
+     * @param rule
+     *         The Rule whose Criterion weight is to be evaluated.
+     *
+     * @return
+     *         The combined weight of all TRUE Criterion divided by the
+     *         weight of all Criterion combined.
+     */
+    private double determineCriterionWeight(final Rule rule) {
+        double totalWeight = 0;
+        double trueWeight = 0;
+
+        for(final Criterion criterion : arrayListMultimap_ruleCriterionAssociations.get(rule)) {
+            totalWeight += criterion.getWeight();
+
+            if(criterion.getIsTrue()) {
+                trueWeight += criterion.getWeight();
+            }
+        }
+
+        return trueWeight / totalWeight;
     }
 
     /**
@@ -280,20 +434,6 @@ public class DataManager implements Serializable {
         }
 
         return numerator / denominator;
-    }
-
-    /**
-     * Publishes the specified Responses to all Response subscribers.
-     *
-     * @param responses
-     *         The Responses to publish.
-     */
-    private void publishResponses(final List<Response> responses) {
-        responses.parallelStream()
-                .forEach(response -> {
-                    arrayList_responseSubscribers.parallelStream()
-                            .forEach(subscriber -> subscriber.handleResponse(this, response));
-                });
     }
 
 
@@ -507,32 +647,6 @@ public class DataManager implements Serializable {
         arrayList_contextNames.remove(context.getName());
 
         lock_arrayList_contextNames.writeLock().unlock();
-    }
-
-    /**
-     * Adds the specified Notifiable subscriber to the Dynamic Dialog System.
-     *
-     * Duplicate entries will be ignored.
-     *
-     *
-     * @param subscriber
-     *         The Notifiable subscriber to add into the Dynamic Dialog System.
-     */
-    public void addResponseSubscriber(final Notifiable subscriber) {
-        if(! arrayList_responseSubscribers.contains(subscriber)) {
-            arrayList_responseSubscribers.add(subscriber);
-        }
-    }
-
-    /**
-     * Removes the specified Notifable subscriber from the Dynamic Dialog System.
-     *
-     *
-     * @param subscriber
-     *         The Notifiable subscriber to remove from the Dynamic Dialog System.
-     */
-    public void removeResponseSubscriber(final Notifiable subscriber) {
-        arrayList_responseSubscribers.remove(subscriber);
     }
 
     /**
@@ -772,6 +886,10 @@ public class DataManager implements Serializable {
 
 
 
+    /** @return The Publisher to use when handling Responses. */
+    public Publisher getPublisher() {
+        return publisher;
+    }
 
     /** @return A copy of the ArrayList containing all Rules, with their IDs as Keys. */
     public List<Rule> getRules() {
