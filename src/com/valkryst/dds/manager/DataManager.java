@@ -172,10 +172,12 @@ public class DataManager implements Serializable {
      */
     private void determineResponseCaseC(final List<Rule> list_triggeredRules, final ConcurrentHashMap<Rule, Double> hashMap_scores) {
         double highestWeight = 0;
+        double currentWeight = 0;
+
         Rule ruleWithHighestWeight = null;
 
         for(final Rule rule : list_triggeredRules) {
-            double currentWeight = hashMap_scores.get(rule);
+            currentWeight = hashMap_scores.get(rule);
 
             if(currentWeight > highestWeight) {
                 highestWeight = currentWeight;
@@ -241,6 +243,10 @@ public class DataManager implements Serializable {
         final double oldestLastUsedTime = getOldestLastUsedTime(list_triggeredRules);
         final double newestLastUsedTime = getNewestLastUsedTime(list_triggeredRules);
 
+        double normalizedScore;
+        double normalizedLUUT;
+        double finalScore;
+
         for(final Rule rule : list_triggeredRules) {
                 /*
                  * If there are Criterion associated with the Rule and at-least one of them evaluates
@@ -251,10 +257,10 @@ public class DataManager implements Serializable {
                  * If there are no Criterion associated with the Rule, then continue.
                  */
             if(hashMap_scores.get(rule) > 0 && getAssociatedCriterions(rule).size() != 0) {
-                final double normalizedScore = normalize(hashMap_scores.get(rule), lowestCriterionScore, highestCriterionScore);
-                final double normalizedLUUT = normalize(rule.getLastUsedTime(), oldestLastUsedTime, newestLastUsedTime) * (currentTime - rule.getLastUsedTime())/1000;
+                normalizedScore = normalize(hashMap_scores.get(rule), lowestCriterionScore, highestCriterionScore);
+                normalizedLUUT = normalize(rule.getLastUsedTime(), oldestLastUsedTime, newestLastUsedTime) * (currentTime - rule.getLastUsedTime())/1000;
 
-                double finalScore = (normalizedScore * 0.6f) + (normalizedLUUT * 0.4f);
+                finalScore = (normalizedScore * 0.6f) + (normalizedLUUT * 0.4f);
 
                 if(finalScore > highestScore) {
                     arrayList_incidesToUse.clear();
@@ -296,10 +302,11 @@ public class DataManager implements Serializable {
      *         Rule<->Score associations.
      */
     private double getLowestCriterionScore(final List<Rule> list_triggeredRules, final ConcurrentHashMap<Rule, Double> hashMap_scores) {
-        Double lowest = Double.MAX_VALUE;
+        double lowest = Double.MAX_VALUE;
+        double currentVal;
 
         for(final Rule rule : list_triggeredRules) {
-            Double currentVal = hashMap_scores.get(rule);
+            currentVal = hashMap_scores.get(rule);
 
             if(currentVal < lowest) {
                 lowest = currentVal;
@@ -324,10 +331,11 @@ public class DataManager implements Serializable {
      *         Rule<->Score associations.
      */
     private double getHighestCriterionScore(final List<Rule> list_triggeredRules, final ConcurrentHashMap<Rule, Double> hashMap_scores) {
-        Double highest = Double.MIN_VALUE;
+        double highest = Double.MIN_VALUE;
+        double currentVal;
 
         for(final Rule rule : list_triggeredRules) {
-            Double currentVal = hashMap_scores.get(rule);
+            currentVal = hashMap_scores.get(rule);
 
             if(currentVal > highest) {
                 highest = currentVal;
@@ -809,7 +817,7 @@ public class DataManager implements Serializable {
      * @param rule
      *         The Rule whose associations are to be removed.
      */
-    public void removeRuleCriterionAssociations(final Rule rule) {
+    private void removeRuleCriterionAssociations(final Rule rule) {
         lock_arrayListMultimap_ruleCriterionAssociations.writeLock().lock();
 
         arrayListMultimap_ruleCriterionAssociations.removeAll(rule);
@@ -841,7 +849,7 @@ public class DataManager implements Serializable {
      * @param rule
      *         The Rule whose associations are to be removed.
      */
-    public void removeRuleEventAssociations(final Rule rule) {
+    private void removeRuleEventAssociations(final Rule rule) {
         lock_arrayListMultimap_ruleEventAssociations.writeLock().lock();
 
         arrayListMultimap_ruleEventAssociations.entries()
@@ -874,7 +882,7 @@ public class DataManager implements Serializable {
      * @param rule
      *         The Rule whose associations are to be removed.
      */
-    public void removeRuleResponseAssociations(final Rule rule) {
+    private void removeRuleResponseAssociations(final Rule rule) {
         lock_arrayListMultimap_ruleResponseAssociations.writeLock().lock();
 
         arrayListMultimap_ruleResponseAssociations.removeAll(rule);
