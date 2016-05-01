@@ -75,8 +75,8 @@ public class Criterion implements Serializable {
 
         switch(comparisonValue_valueType) {
             case BYTE: {
-                final Byte thisByte = Byte.valueOf(comparisonValue);
-                final Byte otherByte = Byte.valueOf(context.getValue());
+                final byte thisByte = Byte.valueOf(comparisonValue);
+                final byte otherByte = Byte.valueOf(context.getValue());
 
                 switch(comparisonType) {
                     case EQUAL_TO: {
@@ -118,8 +118,8 @@ public class Criterion implements Serializable {
             }
 
             case SHORT: {
-                final Short thisShort = Short.valueOf(comparisonValue);
-                final Short otherShort = Short.valueOf(context.getValue());
+                final short thisShort = Short.valueOf(comparisonValue);
+                final short otherShort = Short.valueOf(context.getValue());
 
                 switch(comparisonType) {
                     case EQUAL_TO: {
@@ -161,8 +161,8 @@ public class Criterion implements Serializable {
             }
 
             case INTEGER: {
-                final Integer thisInteger = Integer.valueOf(comparisonValue);
-                final Integer otherInteger = Integer.valueOf(context.getValue());
+                final int thisInteger = Integer.valueOf(comparisonValue);
+                final int otherInteger = Integer.valueOf(context.getValue());
 
                 switch(comparisonType) {
                     case EQUAL_TO: {
@@ -204,8 +204,8 @@ public class Criterion implements Serializable {
             }
 
             case LONG: {
-                final Long thisLong = Long.valueOf(comparisonValue);
-                final Long otherLong = Long.valueOf(context.getValue());
+                final long thisLong = Long.valueOf(comparisonValue);
+                final long otherLong = Long.valueOf(context.getValue());
 
                 switch(comparisonType) {
                     case EQUAL_TO: {
@@ -247,8 +247,8 @@ public class Criterion implements Serializable {
             }
 
             case FLOAT: {
-                final Float thisFloat = Float.valueOf(comparisonValue);
-                final Float otherFloat = Float.valueOf(context.getValue());
+                final float thisFloat = Float.valueOf(comparisonValue);
+                final float otherFloat = Float.valueOf(context.getValue());
 
                 switch(comparisonType) {
                     case EQUAL_TO: {
@@ -290,8 +290,8 @@ public class Criterion implements Serializable {
             }
 
             case DOUBLE: {
-                final Double thisDouble = Double.valueOf(comparisonValue);
-                final Double otherDouble = Double.valueOf(context.getValue());
+                final double thisDouble = Double.valueOf(comparisonValue);
+                final double otherDouble = Double.valueOf(context.getValue());
 
                 switch(comparisonType) {
                     case EQUAL_TO: {
@@ -334,8 +334,8 @@ public class Criterion implements Serializable {
 
 
             case BOOLEAN: {
-                final Boolean thisBoolean = Boolean.valueOf(comparisonValue);
-                final Boolean otherBoolean = Boolean.valueOf(context.getValue());
+                final boolean thisBoolean = Boolean.valueOf(comparisonValue);
+                final boolean otherBoolean = Boolean.valueOf(context.getValue());
 
                 switch(comparisonType) {
                     case EQUAL_TO: {
