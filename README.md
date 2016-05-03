@@ -39,7 +39,6 @@ As a quick and dirty example, here is the very crude ResponseManager for my Spac
 
         private Level level;
 
-        // todo JavaDoc
         @Override
         public void respond(final DataManager dataManager, final Response response) {
             if(level == null) {
