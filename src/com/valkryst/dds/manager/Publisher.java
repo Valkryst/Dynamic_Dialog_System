@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-class Publisher implements Serializable {
+public class Publisher implements Serializable {
     private static final long serialVersionUID = 9075221020153629524L;
 
     /** The ArrayList of all objects to be notified. */
