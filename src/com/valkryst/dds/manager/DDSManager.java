@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class DataManager implements Serializable {
+public class DDSManager implements Serializable {
     private static final long serialVersionUID = 6158503022877874004L;
 
     /** The Random to use where necessary. */
@@ -76,7 +76,7 @@ public class DataManager implements Serializable {
     private final ReentrantReadWriteLock lock_arrayListMultimap_ruleCriterionAssociations = new ReentrantReadWriteLock();
 
     /**
-     * Construct a new DataManager.
+     * Construct a new DDSManager.
      *
      * @param arrayList_events
      *         The Events that can be used by the Dynamic Dialog System.
@@ -84,7 +84,7 @@ public class DataManager implements Serializable {
      * @param arrayList_responseTypes
      *         The ResponseTypes that can be used by the Dynamic Dialog system.
      */
-    public DataManager(final ArrayList<String> arrayList_events, final ArrayList<String> arrayList_responseTypes) {
+    public DDSManager(final ArrayList<String> arrayList_events, final ArrayList<String> arrayList_responseTypes) {
         this.arrayList_events = arrayList_events;
         this.arrayList_responseTypes = arrayList_responseTypes;
     }

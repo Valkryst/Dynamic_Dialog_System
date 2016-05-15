@@ -15,17 +15,17 @@ public class Publisher implements Serializable {
     /**
      * Publishes the specified Responses to all Response subscribers.
      *
-     * @param dataManager
+     * @param ddsManager
      *         todo JavaDoc
      *
      * @param responses
      *         The Responses to publish.
      */
-    void publishResponses(final DataManager dataManager, final List<Response> responses) {
+    void publishResponses(final DDSManager ddsManager, final List<Response> responses) {
         responses.parallelStream()
                 .forEach(response -> {
                     arrayList_responseSubscribers.parallelStream()
-                            .forEach(subscriber -> subscriber.handleResponse(dataManager, response));
+                            .forEach(subscriber -> subscriber.handleResponse(ddsManager, response));
                 });
     }
 

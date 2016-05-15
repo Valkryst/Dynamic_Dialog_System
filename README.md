@@ -40,7 +40,7 @@ As a quick and dirty example, here is the very crude ResponseManager for my Spac
         private Level level;
 
         @Override
-        public void respond(final DataManager dataManager, final Response response) {
+        public void respond(final DataManager ddsManager, final Response response) {
             if(level == null) {
                 throw new NullPointerException("No Level has been assigned to the GameResponseManager.");
             }
@@ -48,12 +48,12 @@ As a quick and dirty example, here is the very crude ResponseManager for my Spac
             switch(response.getResponseType()) {
 
                 case "SCORE_INCREASE": {
-                    dataManager.setValue(0, "Score",  String.valueOf((Long)dataManager.getValue(0, "Score") + Integer.valueOf(response.getValue())));
+                    ddsManager.setValue(0, "Score",  String.valueOf((Long)ddsManager.getValue(0, "Score") + Integer.valueOf(response.getValue())));
                     break;
                 }
 
                 case "SCORE_DECREASE": {
-                    dataManager.setValue(0, "Score",  String.valueOf((Long)dataManager.getValue(0, "Score") - Integer.valueOf(response.getValue())));
+                    ddsManager.setValue(0, "Score",  String.valueOf((Long)ddsManager.getValue(0, "Score") - Integer.valueOf(response.getValue())));
                     break;
                 }
 
@@ -107,7 +107,7 @@ As a quick and dirty example, here is the very crude ResponseManager for my Spac
                 }
 
                 case "PLAYER_SET_FIRING": {
-                    dataManager.setValue(0, "IsPlayerFiring", response.getValue());
+                    ddsManager.setValue(0, "IsPlayerFiring", response.getValue());
                 }
 
                 default: {
@@ -156,7 +156,7 @@ This is a temporary mesure to create the inital "database" of the DDS. In the fu
 
     package com.valkryst.dds;
 
-    import com.valkryst.dds.manager.DataManager;
+    import com.valkryst.dds.manager.DDSManager;
     import com.valkryst.dds.object.*;
 
     import java.io.File;
@@ -184,7 +184,7 @@ This is a temporary mesure to create the inital "database" of the DDS. In the fu
             arrayList_responseTypes.add("PLAYER_ALTER_DY");
             arrayList_responseTypes.add("PLAYER_SET_FIRING");
 
-            final DataManager dataManager = new DataManager(arrayList_events, arrayList_responseTypes);
+            final DataManager ddsManager = new DataManager(arrayList_events, arrayList_responseTypes);
 
             final Context b = new Context("Score", ValueType.LONG, "0");
             final Context c = new Context("Lives", ValueType.BYTE, "3");
@@ -194,19 +194,19 @@ This is a temporary mesure to create the inital "database" of the DDS. In the fu
             final Context t = new Context("Chance For Powerup To Spawn", ValueType.DOUBLE, "0.075");
 
 
-            dataManager.addUser(user);
+            ddsManager.addUser(user);
 
-            dataManager.addContext(b);
-            dataManager.addContext(c);
-            dataManager.addContext(d);
-            dataManager.addContext(e);
-            dataManager.addContext(f);
-            dataManager.addContext(t);
+            ddsManager.addContext(b);
+            ddsManager.addContext(c);
+            ddsManager.addContext(d);
+            ddsManager.addContext(e);
+            ddsManager.addContext(f);
+            ddsManager.addContext(t);
 
             try {
                 FileOutputStream fos = new FileOutputStream(new File("database.ser"));
                 ObjectOutputStream oos = new ObjectOutputStream(fos);
-                oos.writeObject(dataManager);
+                oos.writeObject(ddsManager);
 
                 oos.close();
             } catch(final Exception err) {

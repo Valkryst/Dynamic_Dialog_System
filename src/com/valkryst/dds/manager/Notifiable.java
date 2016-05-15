@@ -6,11 +6,11 @@ public interface Notifiable {
     /**
      * Construct a new ResponseManager.
      *
-     * @param dataManager
+     * @param ddsManager
      *         The data manager that handles all cdata within the Dynamic Dialog System.
      *
      * @param response
      *         The response to fulfill.
      */
-    void handleResponse(final DataManager dataManager, final Response response);
+    void handleResponse(final DDSManager ddsManager, final Response response);
 }
