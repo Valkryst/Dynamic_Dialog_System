@@ -8,10 +8,7 @@ import lombok.NonNull;
 import lombok.Setter;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DDSManager implements Serializable {
@@ -186,9 +183,9 @@ public class DDSManager implements Serializable {
      */
     private void determineResponseCaseD(final List<Rule> list_triggeredRules) {
         final Rule rule = list_triggeredRules.parallelStream()
-                .sorted((ruleA, ruleB) -> Long.compare(ruleA.getLastUsedTime(), ruleB.getLastUsedTime()))
-                .findFirst()
-                .get();
+                                             .sorted(Comparator.comparingLong(Rule::getLastUsedTime))
+                                             .findFirst()
+                                             .get();
 
         rule.updateLastUsedTime();
         publisher.publishResponses(this, arrayListMultimap_ruleResponseAssociations.get(rule));
