@@ -1,21 +1,18 @@
 package com.valkryst.dds.object;
 
 import com.valkryst.dds.collection.SplayTree;
+import lombok.Getter;
 
 import java.io.Serializable;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class User implements Serializable {
     private static final long serialVersionUID = 7804586155533229144L;
 
     /** A unique ID. */
-    private final long id;
+    @Getter private final long id;
 
     /** The SplayTree containing all currently loaded Contexts, with their Names as Keys. */
     private SplayTree<String, Context> splayTree_context = new SplayTree<>();
-
-    /** The Lock of the splayTree_context data structure. */
-    private ReentrantReadWriteLock lock_splayTree_context = new ReentrantReadWriteLock();
 
     /**
      * Construct a new User.
@@ -25,11 +22,6 @@ public class User implements Serializable {
      */
     public User(final long id) {
         this.id = id;
-    }
-
-    /** @return The unique ID of the user. */
-    public long getId() {
-        return id;
     }
 
     /** @return The SplayTree containing all currently loaded Contexts, with their Names as Keys. */
@@ -48,17 +40,6 @@ public class User implements Serializable {
      *         Else NULL is returned.
      */
     public Context getContextByName(final String contextName) {
-        lock_splayTree_context.readLock().lock();
-
-        final Context context = splayTree_context.get(contextName);
-
-        lock_splayTree_context.readLock().unlock();
-
-        return context;
-    }
-
-    /** @return The Lock of the splayTree_context data structure. */
-    public ReentrantReadWriteLock getLock_splayTree_context() {
-        return lock_splayTree_context;
+        return splayTree_context.get(contextName);
     }
 }
