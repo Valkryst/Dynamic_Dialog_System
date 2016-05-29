@@ -21,7 +21,7 @@ public class DDSManager implements Serializable {
 
 
     /** The ConcurrentHashMap containing User IDs and the Users that they corrospond to. */
-    private ConcurrentHashMap<Long, User> hashMap_users = new ConcurrentHashMap<>();
+    @Getter private ConcurrentHashMap<Long, User> hashMap_users = new ConcurrentHashMap<>();
 
     /** The Events that can be used by the Dynamic Dialog System. */
     @Getter @Setter @NonNull private ArrayList<String> arrayList_events;
