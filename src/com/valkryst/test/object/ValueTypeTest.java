@@ -12,25 +12,16 @@ public class ValueTypeTest {
 
     @Test
     public void getValueTypeByName() {
-        // Test without guesses:
+        // Test success:
         for(final ValueType type : ValueType.values()) {
             final String name = type.name().toLowerCase();
-            final ValueType result = ValueType.getValueTypeByName(name, false);
+            final ValueType result = ValueType.getValueTypeByName(name);
 
             Assert.assertEquals(type, result);
         }
 
 
-        // Test with guesses:
-        for(final ValueType type : ValueType.values()) {
-            final String name = type.name().toLowerCase();
-            final ValueType result = ValueType.getValueTypeByName(name, true);
-
-            Assert.assertEquals(type, result);
-        }
-
-
-        // Test failure without guesses:
+        // Test failure:
         final String[] madeUpValueTypes = {"blah", "blob", "blue", "btye", "intargar", "shourt", "boorean"};
 
         for(final String s : madeUpValueTypes) {
@@ -38,16 +29,7 @@ public class ValueTypeTest {
 
 
             expectedException.expect(IllegalArgumentException.class);
-            final ValueType result = ValueType.getValueTypeByName(name, false);
-        }
-
-        // Test failure with guesses:
-        for(final String s : madeUpValueTypes) {
-            final String name = s.toLowerCase();
-
-
-            expectedException.expect(IllegalArgumentException.class);
-            final ValueType result = ValueType.getValueTypeByName(name, true);
+            final ValueType result = ValueType.getValueTypeByName(name);
         }
     }
 }
