@@ -12,7 +12,7 @@ public class User implements Serializable {
     @Getter private final long id;
 
     /** The SplayTree containing all currently loaded Contexts, with their Names as Keys. */
-    private SplayTree<String, Context> splayTree_context = new SplayTree<>();
+    @Getter private SplayTree<String, Context> splayTree_context = new SplayTree<>();
 
     /**
      * Construct a new User.
@@ -22,11 +22,6 @@ public class User implements Serializable {
      */
     public User(final long id) {
         this.id = id;
-    }
-
-    /** @return The SplayTree containing all currently loaded Contexts, with their Names as Keys. */
-    public SplayTree<String, Context> getSplayTree_context() {
-        return splayTree_context;
     }
 
     /**
