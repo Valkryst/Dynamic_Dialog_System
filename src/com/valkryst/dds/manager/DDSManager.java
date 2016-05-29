@@ -92,7 +92,7 @@ public class DDSManager implements Serializable {
         for(final Criterion criterion : arrayListMultimap_ruleCriterionAssociations.get(rule)) {
             criterion.update();
 
-            isTrueCounter += (criterion.getIsTrue() ? 1 : 0);
+            isTrueCounter += (criterion.isTrue() ? 1 : 0);
         }
 
         return isTrueCounter;
@@ -388,7 +388,7 @@ public class DDSManager implements Serializable {
         for(final Criterion criterion : arrayListMultimap_ruleCriterionAssociations.get(rule)) {
             totalWeight += criterion.getWeight();
 
-            if(criterion.getIsTrue()) {
+            if(criterion.isTrue()) {
                 trueWeight += criterion.getWeight();
             }
         }
@@ -451,17 +451,11 @@ public class DDSManager implements Serializable {
     public Object getValue(final long userId, final String key) {
         final User user = hashMap_users.get(userId);
 
-        // Write Lock User's SplayTree:
-        user.getLock_splayTree_context().readLock().lock();
-
         // Get Data:
         final SplayTree<String, Context> splayTree_context = user.getSplayTree_context();
 
         final ValueType valueType = splayTree_context.get(key).getValueType();
         final String value = splayTree_context.get(key).getValue();
-
-        // Unlock the Lock:
-        user.getLock_splayTree_context().readLock().unlock();
 
 
         switch(valueType) {
@@ -554,13 +548,9 @@ public class DDSManager implements Serializable {
      */
     public void addContext(final Context context) {
         for (Map.Entry<Long, User> user : hashMap_users.entrySet()) {
-            user.getValue().getLock_splayTree_context().writeLock().lock();
-
             user.getValue()
                     .getSplayTree_context()
                     .put(context.getName(), context);
-
-            user.getValue().getLock_splayTree_context().writeLock().unlock();
         }
 
         arrayList_contextNames.add(context.getName());
@@ -600,13 +590,9 @@ public class DDSManager implements Serializable {
 
         // Remove the Context from all users:
         for (Map.Entry<Long, User> user : hashMap_users.entrySet()) {
-            user.getValue().getLock_splayTree_context().writeLock().lock();
-
             user.getValue()
                     .getSplayTree_context()
                     .remove(context.getName());
-
-            user.getValue().getLock_splayTree_context().writeLock().unlock();
 
         }
 
