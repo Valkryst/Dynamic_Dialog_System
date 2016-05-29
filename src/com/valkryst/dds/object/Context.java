@@ -1,16 +1,22 @@
 package com.valkryst.dds.object;
 
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.io.Serializable;
 
+@ToString
 public class Context implements Comparable<Context>, Serializable {
     private static final long serialVersionUID = 6080325315007575932L;
 
     /** A descriptive Name. */
-    private final String name;
+    @Getter private final String name;
     /** The type of data held within the value variable. */
-    private final ValueType valueType;
+    @Getter private final ValueType valueType;
     /** The raw data. */
-    private String value;
+    @Getter @Setter @NonNull private String value;
 
     /**
      * Construct a new Context with the specified data.
@@ -33,41 +39,5 @@ public class Context implements Comparable<Context>, Serializable {
     @Override
     public int compareTo(Context context) {
         return name.compareTo(context.getName());
-    }
-
-    @Override
-    public String toString() {
-        return "Context:\n" +
-                "\tName:\n" +
-                "\t\t" + name + "\n" +
-                "\tValueType:\n" +
-                "\t\t" + valueType.name() + "\n" +
-                "\tValue:\n" +
-                "\t\t" + value + "\n";
-    }
-
-    /** @return A descriptive name. */
-    public String getName() {
-        return name;
-    }
-
-    /** The type of data held within the value variable. */
-    public ValueType getValueType() {
-        return valueType;
-    }
-
-    /** The raw data. */
-    public String getValue() {
-        return value;
-    }
-
-    /**
-     * Set the raw data for the Context to use.
-     *
-     * @param value
-     *         The new raw data to be used by the Context.
-     */
-    public void setValue(final String value) {
-        this.value = value;
     }
 }

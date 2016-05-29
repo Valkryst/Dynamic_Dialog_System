@@ -1,23 +1,27 @@
 package com.valkryst.dds.object;
 
+import lombok.Getter;
+import lombok.ToString;
+
 import java.io.Serializable;
 import java.util.Objects;
 
+@ToString
 public class Criterion implements Serializable {
     private static final long serialVersionUID = -7479779125882019268L;
 
     /** The Context to compare to the comparisonValue when evaluating whether or not the Criterion isTrue. */
-    private final Context context;
+    @Getter private final Context context;
     /** The operator to use when comparing the Context and comparisonValue. */
-    private final ComparisonType comparisonType;
+    @Getter private final ComparisonType comparisonType;
     /** The type of data held within the comparisonValue variable. */
     private final ValueType comparisonValue_valueType;
     /** The value to be compared with the Context when evaluating whether or not the Criterion isTrue. */
-    private final String comparisonValue;
+    @Getter private final String comparisonValue;
     /** The weight, or importance, of the Criterion to be used when determining whether or not a Rule should be responded to. */
-    private double weight;
+    @Getter private double weight;
     /** Whether the Criterion evaluates to true or false. */
-    private boolean isTrue;
+    @Getter private boolean isTrue;
 
     /**
      * Construct a new Criterion with the specified data.
@@ -376,45 +380,5 @@ public class Criterion implements Serializable {
                 break;
             }
         }
-    }
-
-    @Override
-    public String toString() {
-        return "Criterion:\n" +
-                "\tContext:\n" +
-                "\t\t" + context.toString() + "\n" +
-                "\tComparisonType:\n" +
-                "\t\t" + comparisonType.name() + "\n" +
-                "\tComparisonValue:\n" +
-                "\t\t" + comparisonValue + "\n" +
-                "\tWeight:\n" +
-                "\t\t" + weight + "\n" +
-                "\tIsTrue:\n" +
-                "\t\t" + isTrue + "\n";
-    }
-
-    /** @return The Context to compare to the comparisonValue when evaluating whether or not the Criterion isTrue. */
-    public Context getContext() {
-        return context;
-    }
-
-    /** @return The operator to use when comparing the Context and comparisonValue. */
-    public ComparisonType getComparisonType() {
-        return comparisonType;
-    }
-
-    /** @return The value to be compared with the Context when evaluating whether or not the Criterion isTrue. */
-    public String getComparisonValue() {
-        return comparisonValue;
-    }
-
-    /** @return The weight, or importance, of the Criterion to be used when determining whether or not a Rule should be responded to. */
-    public double getWeight() {
-        return weight;
-    }
-
-    /** @return Whether the Criterion evaluates to true or false. */
-    public boolean getIsTrue() {
-        return isTrue;
     }
 }
