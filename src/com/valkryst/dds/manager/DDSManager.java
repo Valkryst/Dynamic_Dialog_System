@@ -35,7 +35,7 @@ public class DDSManager implements Serializable {
     @Getter private ArrayList<Rule> arrayList_rules = new ArrayList<>();
 
     /** The HashMap of Contexts. */
-    private final HashMap<String, Context> hashMap_context = new HashMap<>();
+    @Getter private final HashMap<String, Context> hashMap_contexts = new HashMap<>();
 
     /** The ArrayListMultimap containing all associations between each Event and the Rules that it triggers. */
     private ArrayListMultimap<String, Rule> arrayListMultimap_ruleEventAssociations = ArrayListMultimap.create();
@@ -440,8 +440,8 @@ public class DDSManager implements Serializable {
      */
     public Object getValue(final String key) {
         // Get Data:
-        final ValueType valueType = hashMap_context.get(key).getValueType();
-        final String value = hashMap_context.get(key).getValue();
+        final ValueType valueType = hashMap_contexts.get(key).getValueType();
+        final String value = hashMap_contexts.get(key).getValue();
 
 
         switch(valueType) {
@@ -483,7 +483,7 @@ public class DDSManager implements Serializable {
      *        The new Value to place into the Context.
      */
     public void setValue(final String key, final String newValue) {
-        hashMap_context.get(key).setValue(newValue);
+        hashMap_contexts.get(key).setValue(newValue);
     }
 
     /**
@@ -507,8 +507,8 @@ public class DDSManager implements Serializable {
      *         The Context to add into the Dynamic Dialog System.
      */
     public void addContext(final Context context) {
-        if (! hashMap_context.containsKey(context.getName())) {
-            hashMap_context.put(context.getName(), context);
+        if (! hashMap_contexts.containsKey(context.getName())) {
+            hashMap_contexts.put(context.getName(), context);
         }
     }
 
@@ -535,7 +535,7 @@ public class DDSManager implements Serializable {
 
 
         // Remove the Context from the DDS:
-        hashMap_context.remove(context.getName());
+        hashMap_contexts.remove(context.getName());
     }
 
     /**
