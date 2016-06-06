@@ -1,7 +1,6 @@
 package com.valkryst.dds.manager;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.valkryst.dds.collection.SplayTree;
 import com.valkryst.dds.object.*;
 import lombok.Getter;
 import lombok.NonNull;
@@ -20,9 +19,6 @@ public class DDSManager implements Serializable {
     @Getter private final Publisher publisher = new Publisher();
 
 
-    /** The ConcurrentHashMap containing User IDs and the Users that they corrospond to. */
-    @Getter private ConcurrentHashMap<Long, User> hashMap_users = new ConcurrentHashMap<>();
-
     /** The Events that can be used by the Dynamic Dialog System. */
     @Getter @Setter @NonNull private ArrayList<String> arrayList_events;
 
@@ -38,8 +34,8 @@ public class DDSManager implements Serializable {
     /** The ArrayList containing all Rules, with their IDs as Keys. */
     @Getter private ArrayList<Rule> arrayList_rules = new ArrayList<>();
 
-    /** The ArrayList containing all possible Context names. */
-    @Getter private ArrayList<String> arrayList_contextNames = new ArrayList<>();
+    /** The HashMap of Contexts. */
+    private final HashMap<String, Context> hashMap_context = new HashMap<>();
 
     /** The ArrayListMultimap containing all associations between each Event and the Rules that it triggers. */
     private ArrayListMultimap<String, Rule> arrayListMultimap_ruleEventAssociations = ArrayListMultimap.create();
@@ -428,9 +424,6 @@ public class DDSManager implements Serializable {
      * Attempts to retrieve the Value associated with the specified Key
      * from the splayTree_context of the specified user.
      *
-     * @param userId
-     *         The ID of the user to retrieve the value from.
-     *
      * @param key
      *        The Key associated with the Value to retrieve.
      *
@@ -445,14 +438,10 @@ public class DDSManager implements Serializable {
      *
      *        If anything goes wrong, String of data itself is returned.
      */
-    public Object getValue(final long userId, final String key) {
-        final User user = hashMap_users.get(userId);
-
+    public Object getValue(final String key) {
         // Get Data:
-        final SplayTree<String, Context> splayTree_context = user.getSplayTree_context();
-
-        final ValueType valueType = splayTree_context.get(key).getValueType();
-        final String value = splayTree_context.get(key).getValue();
+        final ValueType valueType = hashMap_context.get(key).getValueType();
+        final String value = hashMap_context.get(key).getValue();
 
 
         switch(valueType) {
@@ -487,41 +476,14 @@ public class DDSManager implements Serializable {
      * Attempts to set the Value associated with the specified Key to
      * the specified Value within the splayTree_context.
      *
-     * @param userId
-     *         The ID of the user whose value is to be set.
-     *
      * @param key
      *        The Key associated with the Value to retrieve.
      *
      * @param newValue
      *        The new Value to place into the Context.
      */
-    public void setValue(final long userId, final String key, final String newValue) {
-        hashMap_users.get(userId)
-                .getSplayTree_context()
-                .get(key)
-                .setValue(newValue);
-    }
-
-
-    /**
-     * Adds the specified User into the Dynamic Dialog System.
-     * If a User with the same ID as the specified User already
-     * exists, then no duplicate is added.
-     *
-     * @param user
-     *         The User to add.
-     *
-     * @throws
-     *         If a User with the same ID as the specified
-     *         User already exists.
-     */
-    public void addUser(final User user) throws IllegalArgumentException {
-        if(! hashMap_users.containsKey(user.getId())) {
-            hashMap_users.put(user.getId(), user);
-        } else {
-            throw new IllegalArgumentException("A user with the ID " + user.getId() + " already exists.");
-        }
+    public void setValue(final String key, final String newValue) {
+        hashMap_context.get(key).setValue(newValue);
     }
 
     /**
@@ -539,31 +501,15 @@ public class DDSManager implements Serializable {
 
     /**
      * Adds the specified Context into the Dynamic Dialog System.
+     * Ignores duplicate entries.
      *
      * @param context
      *         The Context to add into the Dynamic Dialog System.
      */
     public void addContext(final Context context) {
-        for (Map.Entry<Long, User> user : hashMap_users.entrySet()) {
-            user.getValue()
-                    .getSplayTree_context()
-                    .put(context.getName(), context);
+        if (! hashMap_context.containsKey(context.getName())) {
+            hashMap_context.put(context.getName(), context);
         }
-
-        arrayList_contextNames.add(context.getName());
-    }
-
-    /**
-     * Removes the specified User from the Dynamic Dialog System.
-     *
-     * If no User matching the exact ID and User object of the
-     * specified User is found, then nothing happens.
-     *
-     * @param user
-     *         The User to remove.
-     */
-    public void removeUser(final User user) {
-        hashMap_users.remove(user.getId(), user);
     }
 
     /**
@@ -584,22 +530,12 @@ public class DDSManager implements Serializable {
                             context.toString() + "\n\n" + criterion.toString());
                 });
 
-
-        // Remove the Context from all users:
-        for (Map.Entry<Long, User> user : hashMap_users.entrySet()) {
-            user.getValue()
-                    .getSplayTree_context()
-                    .remove(context.getName());
-
-        }
-
-
         // Remove the Context's last used time from the DDS:
         hashMap_context_lastUsedTime.remove(context);
 
 
-        // Remove the Context's name from the DDS:
-        arrayList_contextNames.remove(context.getName());
+        // Remove the Context from the DDS:
+        hashMap_context.remove(context.getName());
     }
 
     /**
