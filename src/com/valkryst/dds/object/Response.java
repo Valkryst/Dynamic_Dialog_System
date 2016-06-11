@@ -27,4 +27,21 @@ public class Response implements Serializable {
         this.responseType = responseType;
         this.value = value;
     }
+
+    /**
+     * Construct a new Response with the specified type
+     * and using the name of the specified Context as the
+     * Response value.
+     *
+     * @param responseType
+     *         The type of the response.
+     *
+     * @param context
+     *         The Context whose name is to be used as the
+     *         Response value.
+     */
+    public Response(final String responseType, final Context context) {
+        this.responseType = responseType;
+        this.value = context.getName();
+    }
 }
