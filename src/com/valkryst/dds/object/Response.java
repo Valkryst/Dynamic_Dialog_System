@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 @ToString
 public class Response implements Serializable {
-    private static final long serialVersionUID = 2097470428838106098L;
+    private static final long serialVersionUID = -6102405596177368285L;
 
     /** The type of response. */
     @Getter private final String responseType;
