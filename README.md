@@ -1,10 +1,10 @@
-# Dynamic_Dialog_System
+# Dynamic Dialog System
 
 Based on the Dynamic Dialog System outlined in the following GDC document.
 
 http://www.gdcvault.com/play/1015317/AI-driven-Dynamic-Dialog-through
 
----
+
 
 ##Setup:
 
@@ -13,114 +13,33 @@ This is a very rough setup guide using IntelliJ.
 * Clone the repo.
 * Open the project in IntelliJ.
 * Build the project to ensure there are currently no build errors. If one is found, then make an Issue here on GitHub and it will be fixed.
-* Open your project in IntelliJ.
 * Add the DDS as a module to your project.
 
-Now that the DDS has been sucessfully added as a module to your project, you'll need to create your own ResponseManager and carefully consider the Events and ResponseTypes that you wish to use.
+##Dispatching & Handling Events:
 
-##ResponseManager:
+An object that is able to handle the Response of an Event should implement Notifiable and should be added to the 
+Publisher as a subscriber to any and all EventTypes which the object can handle.
 
-The ResponseManager is in-charge of handling the Responses of any Rule triggered by an Event. You can learn more about how the system works by reading the "System Overview.odt" document, but suffice to say that anytime a Response happens, the ResponseManager is handed the Response object and must perform whatever action the Response says to do.
+Whenever the DDS determines a Response or Responses to an Event, the Publisher is used to tell/notify all subscribers
+that they should handle the Response(s). Only those subscribers who have subscribed to the response type of the Response
+will be told/notified to handle the Response(s).
 
-To create your own ResponseManager, simply create a new class which extends the abstract ResponseManager class and implement whatever Response handling you wish within the respond() method.
+###Example:
 
-As a quick and dirty example, here is the very crude ResponseManager for my Space Invaders test game.
+For example, let's say we have both a Cat and a Dog object which both implement Notifiable. Using the Publisher, the Cat
+subscribes to the "Eat", "Sleep", and "Meow" response types whereas the Dog subscribes to the "Eat", "Sleep", and "Bark"
+response types.
 
-    package core;
+If the DDS determines that a response of the response type "Eat" should be handled, it will use the Publisher to notify 
+any subscribers to the "Eat" response type. Both the Cat and Dog subscribe to "Eat", so they are both notified.
 
-    import com.valkryst.java.core.Log;
-    import data.Response;
-    import data.ResponseManager;
-    import data.collection.DataManager;
-    import object.Level;
+If the DDS determines that a response of the response type "Sleep" should be handled, the same situation occurs where
+both the Cat and Dog are notified.
 
-    public class GameResponseManager extends ResponseManager {
-        private static final long serialVersionUID = -3411852210090794653L;
+If the DDS determines that a response of the response type "Meow" should be handled, then only the Cat is notified.
 
-        private Level level;
+If the DDS determines that a response of the response type "Bark" should be handled, then only the Dog is notified.
 
-        @Override
-        public void respond(final DataManager ddsManager, final Response response) {
-            if(level == null) {
-                throw new NullPointerException("No Level has been assigned to the GameResponseManager.");
-            }
-
-            switch(response.getResponseType()) {
-
-                case "SCORE_INCREASE": {
-                    ddsManager.setValue(0, "Score",  String.valueOf((Long)ddsManager.getValue(0, "Score") + Integer.valueOf(response.getValue())));
-                    break;
-                }
-
-                case "SCORE_DECREASE": {
-                    ddsManager.setValue(0, "Score",  String.valueOf((Long)ddsManager.getValue(0, "Score") - Integer.valueOf(response.getValue())));
-                    break;
-                }
-
-                case "AUDIO": {
-                    final String[] responseTokens = response.getValue().split("<<|>>");
-
-                    switch (responseTokens.length) {
-                        case 1: {
-                            AUDIO_HANDLER.handleAudioResponse(responseTokens[0], null, null, null);
-                            break;
-                        }
-
-                        case 2: {
-                            AUDIO_HANDLER.handleAudioResponse(responseTokens[0], responseTokens[1], null, null);
-                            break;
-                        }
-
-                        case 3: {
-                            AUDIO_HANDLER.handleAudioResponse(responseTokens[0], responseTokens[1], responseTokens[2], null);
-                            break;
-                        }
-
-                        case 4: {
-                            AUDIO_HANDLER.handleAudioResponse(responseTokens[0], responseTokens[1], responseTokens[2], responseTokens[3]);
-                            break;
-                        }
-
-                        default: {
-                            final StringBuilder sb = new StringBuilder();
-                            sb.append("The number of parameters parsed from the responseValue is either too low or too high. The parameters are as follows.");
-
-                            for (final String s : responseTokens) {
-                                sb.append("\n\t").append(s);
-                            }
-
-                            Driver.LOGGER.addLog(Log.LOGTYPE_ERROR, sb.toString());
-                        }
-                    }
-
-                    break;
-                }
-
-                case "PLAYER_ALTER_DX": {
-                    level.getPlayer().alterDx(Double.parseDouble(response.getValue()));
-                    break;
-                }
-
-                case "PLAYER_ALTER_DY": {
-                    level.getPlayer().alterDy(Double.parseDouble(response.getValue()));
-                    break;
-                }
-
-                case "PLAYER_SET_FIRING": {
-                    ddsManager.setValue(0, "IsPlayerFiring", response.getValue());
-                }
-
-                default: {
-                    Driver.LOGGER.addLog(Log.LOGTYPE_WARNING, "The response type of the following Response is unknown and cannot be handled.\n" + response.toString());
-                }
-            }
-        }
-
-        public void setLevel(final Level level) {
-            this.level = level;
-        }
-    }
-Although the implementation of the respond() method will vary highly from game-to-game, this should give a general idea of what the ResponseManager does.
 
 ##Events & ResponseTypes:
 
@@ -152,7 +71,9 @@ These will be visible to anyone working through the Dynamic Dialogue Writer (a s
 
 ##Bootstrapping a DDS:
 
-This is a temporary mesure to create the inital "database" of the DDS. In the future the Dynamic Dialog Writer will allow for creation of this "database", but for now you will need to do something along these lines to create the inital "database" that you can load into the Dynamic Dialog Writer and begin working/testing you game with:
+This is a temporary mesure to create the inital "database" of the DDS. In the future the Dynamic Dialog Writer will 
+allow for creation of this "database", but for now you will need to do something along these lines to create the initial
+"database" that you can load into the Dynamic Dialog Writer and begin working/testing you game with:
 
     package com.valkryst.dds;
 
